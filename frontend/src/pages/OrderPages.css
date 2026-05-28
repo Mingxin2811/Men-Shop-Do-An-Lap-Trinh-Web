@@ -1,0 +1,154 @@
+.order-history { padding-bottom: var(--spacing-3xl); }
+
+.order-empty {
+  text-align: center;
+  padding: var(--spacing-3xl) 0;
+  color: var(--text-secondary);
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.order-card {
+  display: block;
+  border: 1px solid var(--border);
+  padding: var(--spacing-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.order-card:hover {
+  border-color: var(--black);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.order-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.order-card__id {
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+.order-card__date {
+  font-size: 0.775rem;
+  color: var(--mid-gray);
+  margin-top: 2px;
+}
+
+.order-card__badges {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.order-card__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.order-card__item {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  background: var(--offwhite);
+  padding: 3px 10px;
+}
+
+.order-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--warm-gray);
+  font-size: 0.8rem;
+  color: var(--mid-gray);
+}
+
+.order-card__total {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--black);
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 2px;
+}
+
+/* Detail */
+.order-detail { padding-bottom: var(--spacing-3xl); }
+.order-detail .page-header { display: flex; justify-content: space-between; align-items: baseline; }
+
+.order-detail__layout { max-width: 800px; }
+
+.order-info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xl);
+}
+
+.info-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mid-gray);
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--warm-gray);
+}
+
+.order-item__name {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.order-item__variant {
+  font-size: 0.775rem;
+  color: var(--mid-gray);
+  margin-top: 2px;
+}
+
+.order-item__right {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: var(--spacing-md);
+  font-size: 1rem;
+  font-weight: 500;
+}

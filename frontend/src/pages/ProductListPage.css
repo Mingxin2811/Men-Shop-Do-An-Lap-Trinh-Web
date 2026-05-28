@@ -1,0 +1,251 @@
+.product-list-page {
+  padding-bottom: var(--spacing-3xl);
+}
+
+.plp-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-xl);
+}
+
+.plp-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+}
+
+.plp-count {
+  font-size: 0.75rem;
+  color: var(--mid-gray);
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.plp-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.plp-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.plp-filter-btn:hover {
+  border-color: var(--black);
+}
+
+.plp-sort {
+  width: 180px;
+}
+
+.plp-body {
+  display: flex;
+  gap: var(--spacing-2xl);
+  align-items: flex-start;
+}
+
+/* Filters sidebar */
+.plp-filters {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+}
+
+.plp-filters__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  display: none;
+}
+
+.plp-filters__close {
+  font-size: 1.2rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--black);
+}
+
+.filter-group {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-group:last-child {
+  border-bottom: none;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.filter-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.filter-item span {
+  font-size: 0.7rem;
+  color: var(--mid-gray);
+}
+
+.filter-item:hover,
+.filter-item.active {
+  color: var(--black);
+  font-weight: 400;
+}
+
+.filter-item.active {
+  border-left: 2px solid var(--black);
+  padding-left: var(--spacing-sm);
+}
+
+.filter-search {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-price {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.filter-price span {
+  color: var(--mid-gray);
+  flex-shrink: 0;
+}
+
+.filter-price-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 400;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.filter-chip:hover {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
+/* Products area */
+.plp-products {
+  flex: 1;
+  min-width: 0;
+}
+
+.plp-empty {
+  text-align: center;
+  padding: var(--spacing-3xl) 0;
+  color: var(--text-secondary);
+}
+
+/* Mobile overlay */
+.plp-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 199;
+}
+
+@media (max-width: 900px) {
+  .plp-body {
+    flex-direction: column;
+  }
+
+  .plp-filters {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: var(--white);
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+    z-index: 200;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+  }
+
+  .plp-filters.open {
+    display: block;
+  }
+
+  .plp-filters.open ~ .plp-overlay {
+    display: block;
+  }
+
+  .plp-overlay {
+    display: none;
+  }
+
+  .plp-filters.open ~ .plp-products ~ .plp-overlay,
+  .plp-overlay {
+    display: block;
+  }
+
+  .plp-filters__header {
+    display: flex;
+  }
+
+  .plp-products {
+    width: 100%;
+  }
+}
