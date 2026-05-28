@@ -1,16 +1,36 @@
-import express from 'express';
-import { getCart, addToCart, updateCartItem, deleteCartItem, clearCart } from '../controllers/cart.controller.js';
-import { protect } from '../middlewares/auth.middleware.js';
+const express = require("express");
+const { body } = require("express-validator");
+const {
+  getCart,
+  addToCart,
+  updateCartItem,
+  deleteCartItem,
+  clearCart
+} = require("../controllers/cart.controller");
+const protect = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
 
 const router = express.Router();
 
-// Tất cả các route giỏ hàng bắt buộc phải đăng nhập với quyền CUSTOMER/USER
 router.use(protect);
 
-router.get('/', getCart);
-router.post('/', addToCart);
-router.put('/:id', updateCartItem);
-router.delete('/:id', deleteCartItem);
-router.delete('/', clearCart);
+router.get("/", getCart);
+router.post(
+  "/",
+  [
+    body("productId").notEmpty().withMessage("San pham la bat buoc"),
+    body("quantity").isInt({ min: 1 }).withMessage("So luong phai lon hon 0")
+  ],
+  validate,
+  addToCart
+);
+router.put(
+  "/:id",
+  [body("quantity").isInt({ min: 1 }).withMessage("So luong phai lon hon 0")],
+  validate,
+  updateCartItem
+);
+router.delete("/:id", deleteCartItem);
+router.delete("/", clearCart);
 
-export default router;
+module.exports = router;

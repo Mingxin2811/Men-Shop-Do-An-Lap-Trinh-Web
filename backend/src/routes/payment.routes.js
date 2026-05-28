@@ -1,11 +1,27 @@
-import express from 'express';
-import { createCheckoutSession, handleMockPaymentGateway, stripeWebhook } from '../controllers/payment.controller.js';
-import { protect } from '../middlewares/auth.middleware.js';
+const express = require("express");
+const { body } = require("express-validator");
+const {
+  createCheckoutSession,
+  handleMockPaymentGateway,
+  handlePaymentSuccess,
+  handlePaymentCancel,
+  stripeWebhook
+} = require("../controllers/payment.controller");
+const protect = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
 
 const router = express.Router();
 
-router.post('/create-checkout-session', protect, createCheckoutSession);
-router.get('/mock-gateway', handleMockPaymentGateway); // Điều hướng trung gian cho test gateway
-router.post('/webhook', stripeWebhook);
+router.post(
+  "/create-checkout-session",
+  protect,
+  [body("orderId").notEmpty().withMessage("orderId la bat buoc")],
+  validate,
+  createCheckoutSession
+);
+router.get("/mock-gateway", handleMockPaymentGateway);
+router.get("/success", handlePaymentSuccess);
+router.get("/cancel", handlePaymentCancel);
+router.post("/webhook", stripeWebhook);
 
-export default router;
+module.exports = router;

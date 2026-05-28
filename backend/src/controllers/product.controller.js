@@ -1,18 +1,36 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+const prisma = require("../config/db");
+const slugify = require("../utils/slugify");
+const { successResponse, errorResponse } = require("../utils/response");
 
-const makeSlug = (text) => {
-  return text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').trim();
+const normalizeVariants = (variants = []) => {
+  return variants.map((variant) => ({
+    size: String(variant.size || "").trim(),
+    color: String(variant.color || "").trim(),
+    stock: Number(variant.stock || 0)
+  }));
 };
 
-export const getProducts = async (req, res, next) => {
+const getProducts = async (req, res, next) => {
   try {
-    const { search, category, minPrice, maxPrice, size, color, page = 1, limit = 12, sort } = req.query;
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      size,
+      color,
+      page = 1,
+      limit = 12,
+      sort = "newest"
+    } = req.query;
 
+    const take = Math.max(parseInt(limit, 10) || 12, 1);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (currentPage - 1) * take;
     const where = { isActive: true };
 
     if (search) {
-      where.name = { contains: search, mode: 'insensitive' };
+      where.name = { contains: search, mode: "insensitive" };
     }
 
     if (category) {
@@ -21,30 +39,27 @@ export const getProducts = async (req, res, next) => {
 
     if (minPrice || maxPrice) {
       where.price = {};
-      if (minPrice) where.price.gte = parseFloat(minPrice);
-      if (maxPrice) where.price.lte = parseFloat(maxPrice);
+      if (minPrice) where.price.gte = Number(minPrice);
+      if (maxPrice) where.price.lte = Number(maxPrice);
     }
 
     if (size || color) {
-      where.product_variants = {
+      where.variants = {
         some: {
-          ...(size && { size }),
-          ...(color && { color })
+          ...(size ? { size } : {}),
+          ...(color ? { color } : {})
         }
       };
     }
 
-    const take = parseInt(limit);
-    const skip = (parseInt(page) - 1) * take;
-
-    let orderBy = { createdAt: 'desc' };
-    if (sort === 'price_asc') orderBy = { price: 'asc' };
-    if (sort === 'price_desc') orderBy = { price: 'desc' };
+    let orderBy = { createdAt: "desc" };
+    if (sort === "price_asc") orderBy = { price: "asc" };
+    if (sort === "price_desc") orderBy = { price: "desc" };
 
     const [products, totalProducts] = await prisma.$transaction([
       prisma.product.findMany({
         where,
-        include: { category: true, product_variants: true },
+        include: { category: true, variants: true },
         skip,
         take,
         orderBy
@@ -52,114 +67,158 @@ export const getProducts = async (req, res, next) => {
       prisma.product.count({ where })
     ]);
 
-    return res.status(200).json({
-      success: true,
-      message: "Lấy danh sách sản phẩm thành công",
-      data: {
-        products,
-        totalProducts,
-        totalPages: Math.ceil(totalProducts / take),
-        currentPage: parseInt(page)
-      }
+    return successResponse(res, "Lay danh sach san pham thanh cong", {
+      products,
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / take),
+      currentPage
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-export const getProductById = async (req, res, next) => {
+const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { category: true, product_variants: true }
+    const product = await prisma.product.findFirst({
+      where: { id, isActive: true },
+      include: { category: true, variants: true }
     });
 
     if (!product) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm" });
+      return errorResponse(res, "Khong tim thay san pham", 404);
     }
 
-    return res.status(200).json({ success: true, message: "Lấy chi tiết sản phẩm thành công", data: product });
+    return successResponse(res, "Lay chi tiet san pham thanh cong", product);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-export const createProduct = async (req, res, next) => {
+const createProduct = async (req, res, next) => {
   try {
     const { categoryId, name, description, price, imageUrl, stock, variants } = req.body;
+    const slug = slugify(name);
 
-    if (!name || !price || price <= 0 || stock < 0) {
-      return res.status(400).json({ success: false, message: "Dữ liệu sản phẩm không hợp lệ" });
+    const category = await prisma.category.findUnique({ where: { id: categoryId } });
+    if (!category) {
+      return errorResponse(res, "Danh muc khong ton tai", 404);
     }
 
-    const slug = makeSlug(name);
-    
-    // Sử dụng kỹ thuật Nested Writes của Prisma để tạo Product kèm các Variant cùng lúc
+    const existingProduct = await prisma.product.findUnique({ where: { slug } });
+    if (existingProduct) {
+      return errorResponse(res, "San pham da ton tai", 409);
+    }
+
     const product = await prisma.product.create({
       data: {
         categoryId,
-        name,
+        name: name.trim(),
         slug,
-        description,
-        price,
-        imageUrl,
-        stock,
-        product_variants: {
-          create: variants || [] // Mảng dạng [{ size: "M", color: "Black", stock: 10 }]
+        description: description || "",
+        price: Number(price),
+        imageUrl: imageUrl || "",
+        stock: Number(stock),
+        variants: {
+          create: normalizeVariants(variants)
         }
       },
-      include: { product_variants: true }
+      include: { category: true, variants: true }
     });
 
-    return res.status(201).json({ success: true, message: "Thêm sản phẩm thành công", data: product });
+    return successResponse(res, "Them san pham thanh cong", product, 201);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-export const updateProduct = async (req, res, next) => {
+const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { categoryId, name, description, price, imageUrl, stock, variants } = req.body;
 
-    const dataToUpdate = { categoryId, description, price, imageUrl, stock };
-    if (name) {
-      dataToUpdate.name = name;
-      dataToUpdate.slug = makeSlug(name);
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct) {
+      return errorResponse(res, "Khong tim thay san pham", 404);
     }
 
-    // Cập nhật thông tin cơ bản và xử lý đơn giản biến thể (xóa cũ tạo mới nếu truyền mảng mới)
+    const dataToUpdate = {};
+
+    if (categoryId !== undefined) {
+      const category = await prisma.category.findUnique({ where: { id: categoryId } });
+      if (!category) {
+        return errorResponse(res, "Danh muc khong ton tai", 404);
+      }
+      dataToUpdate.categoryId = categoryId;
+    }
+
+    if (name !== undefined) {
+      const slug = slugify(name);
+      const duplicatedSlug = await prisma.product.findFirst({
+        where: {
+          slug,
+          NOT: { id }
+        }
+      });
+
+      if (duplicatedSlug) {
+        return errorResponse(res, "Ten san pham da ton tai", 409);
+      }
+
+      dataToUpdate.name = name.trim();
+      dataToUpdate.slug = slug;
+    }
+    if (description !== undefined) dataToUpdate.description = description || "";
+    if (price !== undefined) dataToUpdate.price = Number(price);
+    if (imageUrl !== undefined) dataToUpdate.imageUrl = imageUrl || "";
+    if (stock !== undefined) dataToUpdate.stock = Number(stock);
+
     const product = await prisma.$transaction(async (tx) => {
-      if (variants) {
+      if (variants !== undefined) {
         await tx.productVariant.deleteMany({ where: { productId: id } });
-        dataToUpdate.product_variants = {
-          create: variants
+        dataToUpdate.variants = {
+          create: normalizeVariants(variants)
         };
       }
-      return await tx.product.update({
+
+      return tx.product.update({
         where: { id },
         data: dataToUpdate,
-        include: { product_variants: true }
+        include: { category: true, variants: true }
       });
     });
 
-    return res.status(200).json({ success: true, message: "Cập nhật sản phẩm thành công", data: product });
+    return successResponse(res, "Cap nhat san pham thanh cong", product);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-export const deleteProduct = async (req, res, next) => {
+const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // Thực hiện Soft Delete theo yêu cầu đề bài
+
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct) {
+      return errorResponse(res, "Khong tim thay san pham", 404);
+    }
+
     await prisma.product.update({
       where: { id },
       data: { isActive: false }
     });
-    return res.status(200).json({ success: true, message: "Ẩn sản phẩm thành công (Soft delete)" });
+
+    return successResponse(res, "An san pham thanh cong");
   } catch (error) {
-    next(error);
+    return next(error);
   }
+};
+
+module.exports = {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
 };

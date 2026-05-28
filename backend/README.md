@@ -20,6 +20,11 @@ npm run dev
 - `GET /api/auth/me`
 - `PUT /api/auth/profile`
 
+## Swagger va Postman
+
+- Swagger UI: `http://localhost:5000/api-docs`
+- Huong dan test Postman chi tiet: `../docs/postman-testing-guide.md`
+
 Tat ca response tra ve JSON theo dang:
 
 ```json

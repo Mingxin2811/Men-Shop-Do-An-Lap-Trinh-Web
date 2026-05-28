@@ -1,13 +1,34 @@
-import express from 'express';
-import { getCategories, createCategory, updateCategory, deleteCategory } from '../controllers/category.controller.js';
-import { protect } from '../middlewares/auth.middleware.js';
-import { admin } from '../middlewares/admin.middleware.js';
+const express = require("express");
+const { body } = require("express-validator");
+const {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory
+} = require("../controllers/category.controller");
+const protect = require("../middlewares/auth.middleware");
+const adminOnly = require("../middlewares/admin.middleware");
+const validate = require("../middlewares/validate.middleware");
 
 const router = express.Router();
 
-router.get('/', getCategories);
-router.post('/', protect, admin, createCategory);
-router.put('/:id', protect, admin, updateCategory);
-router.delete('/:id', protect, admin, deleteCategory);
+router.get("/", getCategories);
+router.post(
+  "/",
+  protect,
+  adminOnly,
+  [body("name").trim().notEmpty().withMessage("Ten danh muc la bat buoc")],
+  validate,
+  createCategory
+);
+router.put(
+  "/:id",
+  protect,
+  adminOnly,
+  [body("name").optional().trim().notEmpty().withMessage("Ten danh muc khong duoc de trong")],
+  validate,
+  updateCategory
+);
+router.delete("/:id", protect, adminOnly, deleteCategory);
 
-export default router;
+module.exports = router;

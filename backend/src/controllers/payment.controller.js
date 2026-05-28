@@ -1,71 +1,172 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+const prisma = require("../config/db");
+const { successResponse, errorResponse } = require("../utils/response");
 
-export const createCheckoutSession = async (req, res, next) => {
+const getApiBaseUrl = (req) => {
+  return process.env.API_URL || `${req.protocol}://${req.get("host")}`;
+};
+
+const createCheckoutSession = async (req, res, next) => {
   try {
     const { orderId } = req.body;
     const userId = req.user.id;
 
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order || order.userId !== userId) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng hợp lệ" });
+      return errorResponse(res, "Khong tim thay don hang hop le", 404);
     }
 
     if (order.paymentStatus === "PAID") {
-      return res.status(400).json({ success: false, message: "Đơn hàng này đã thanh toán rồi" });
+      return errorResponse(res, "Don hang nay da thanh toan", 400);
     }
 
-    // Giả lập môi trường Test Sandbox (Đảm bảo đồ án chạy mượt mà không bị lỗi Token Stripe/VNPay)
-    // Cung cấp URL xử lý trực tiếp để sinh viên dễ dàng demo khi bảo vệ đồ án trước hội đồng
-    const mockCheckoutUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/api/payments/mock-gateway?orderId=${orderId}`;
+    if (order.paymentMethod === "COD") {
+      return errorResponse(res, "Don hang COD khong can checkout online", 400);
+    }
 
-    return res.status(200).json({
-      success: true,
-      message: "Tạo phiên thanh toán giả lập thành công",
-      checkoutUrl: mockCheckoutUrl
+    const apiBaseUrl = getApiBaseUrl(req);
+    const checkoutUrl = `${apiBaseUrl}/api/payments/mock-gateway?orderId=${orderId}`;
+
+    return successResponse(res, "Tao phien thanh toan gia lap thanh cong", {
+      checkoutUrl,
+      successUrl: `${apiBaseUrl}/api/payments/success?orderId=${orderId}`,
+      cancelUrl: `${apiBaseUrl}/api/payments/cancel?orderId=${orderId}`
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-export const handleMockPaymentGateway = async (req, res, next) => {
+const markPaymentSuccess = async (orderId) => {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+      return null;
+    }
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: { paymentStatus: "PAID" }
+    });
+
+    await tx.payment.upsert({
+      where: { orderId },
+      update: {
+        transactionId: `MOCK_TX_${Date.now()}`,
+        amount: order.totalAmount,
+        status: "PAID"
+      },
+      create: {
+        orderId,
+        provider: "MOCK_STRIPE",
+        transactionId: `MOCK_TX_${Date.now()}`,
+        amount: order.totalAmount,
+        status: "PAID"
+      }
+    });
+
+    return order;
+  });
+};
+
+const markPaymentCancel = async (orderId) => {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) {
+    return null;
+  }
+
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id: orderId },
+      data: { paymentStatus: "FAILED" }
+    }),
+    prisma.payment.upsert({
+      where: { orderId },
+      update: {
+        amount: order.totalAmount,
+        status: "CANCELLED"
+      },
+      create: {
+        orderId,
+        provider: "MOCK_STRIPE",
+        amount: order.totalAmount,
+        status: "CANCELLED"
+      }
+    })
+  ]);
+
+  return order;
+};
+
+const handleMockPaymentGateway = async (req, res, next) => {
   try {
-    const { orderId, action } = req.query; // action có thể là 'success' hoặc 'cancel'
-
-    if (action === 'cancel') {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: "FAILED", status: "PENDING" }
-      });
-      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/payment-cancel`);
+    const { orderId, action = "success" } = req.query;
+    if (!orderId) {
+      return errorResponse(res, "orderId la bat buoc", 400);
     }
 
-    // Trường hợp mặc định hoặc chọn thanh toán thành công thành công (Success)
-    await prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: "PAID" }
-      });
+    const apiBaseUrl = getApiBaseUrl(req);
+    if (action === "cancel") {
+      return res.redirect(`${apiBaseUrl}/api/payments/cancel?orderId=${orderId}`);
+    }
 
-      await tx.payment.create({
-        data: {
-          orderId,
-          provider: "STRIPE_SANDBOX",
-          transactionId: "MOCK_TX_" + Date.now(),
-          amount: (await tx.order.findUnique({ where: { id: orderId } })).totalAmount,
-          status: "PAID"
-        }
-      });
-    });
-
-    return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/payment-success`);
+    return res.redirect(`${apiBaseUrl}/api/payments/success?orderId=${orderId}`);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
-export const stripeWebhook = async (req, res) => {
-  // Điểm neo nhận phản hồi sự kiện từ Webhook thực tế
+const handlePaymentSuccess = async (req, res, next) => {
+  try {
+    const { orderId } = req.query;
+    if (!orderId) {
+      return errorResponse(res, "orderId la bat buoc", 400);
+    }
+
+    const order = await markPaymentSuccess(orderId);
+    if (!order) {
+      return errorResponse(res, "Khong tim thay don hang", 404);
+    }
+
+    if (req.accepts("html")) {
+      return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/payment-success?orderId=${orderId}`);
+    }
+
+    return successResponse(res, "Thanh toan thanh cong", { orderId });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const handlePaymentCancel = async (req, res, next) => {
+  try {
+    const { orderId } = req.query;
+    if (!orderId) {
+      return errorResponse(res, "orderId la bat buoc", 400);
+    }
+
+    const order = await markPaymentCancel(orderId);
+    if (!order) {
+      return errorResponse(res, "Khong tim thay don hang", 404);
+    }
+
+    if (req.accepts("html")) {
+      return res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/payment-cancel?orderId=${orderId}`);
+    }
+
+    return successResponse(res, "Da huy thanh toan", { orderId });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const stripeWebhook = async (req, res) => {
   return res.status(200).json({ received: true });
+};
+
+module.exports = {
+  createCheckoutSession,
+  handleMockPaymentGateway,
+  handlePaymentSuccess,
+  handlePaymentCancel,
+  stripeWebhook
 };

@@ -1,15 +1,25 @@
-import express from 'express';
-import { getDashboardStats, getUsers, updateUserStatus } from '../controllers/admin.controller.js';
-import { protect } from '../middlewares/auth.middleware.js';
-import { admin } from '../middlewares/admin.middleware.js';
+const express = require("express");
+const { body } = require("express-validator");
+const {
+  getDashboardStats,
+  getUsers,
+  updateUserStatus
+} = require("../controllers/admin.controller");
+const protect = require("../middlewares/auth.middleware");
+const adminOnly = require("../middlewares/admin.middleware");
+const validate = require("../middlewares/validate.middleware");
 
 const router = express.Router();
 
-// Tất cả các route quản lý tổng quan này bắt buộc cần đăng nhập bằng tài khoản ADMIN
-router.use(protect, admin);
+router.use(protect, adminOnly);
 
-router.get('/dashboard', getDashboardStats);
-router.get('/users', getUsers);
-router.put('/users/:id/status', updateUserStatus);
+router.get("/dashboard", getDashboardStats);
+router.get("/users", getUsers);
+router.put(
+  "/users/:id/status",
+  [body("isActive").isBoolean().withMessage("isActive phai la boolean")],
+  validate,
+  updateUserStatus
+);
 
-export default router;
+module.exports = router;

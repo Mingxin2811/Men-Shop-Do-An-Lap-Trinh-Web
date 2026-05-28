@@ -1,14 +1,37 @@
-import express from 'express';
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/product.controller.js';
-import { protect } from '../middlewares/auth.middleware.js';
-import { admin } from '../middlewares/admin.middleware.js';
+const express = require("express");
+const { body } = require("express-validator");
+const {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} = require("../controllers/product.controller");
+const protect = require("../middlewares/auth.middleware");
+const adminOnly = require("../middlewares/admin.middleware");
+const validate = require("../middlewares/validate.middleware");
 
 const router = express.Router();
 
-router.get('/', getProducts);
-router.get('/:id', getProductById);
-router.post('/', protect, admin, createProduct);
-router.put('/:id', protect, admin, updateProduct);
-router.delete('/:id', protect, admin, deleteProduct);
+const productValidation = [
+  body("categoryId").notEmpty().withMessage("Danh muc la bat buoc"),
+  body("name").trim().notEmpty().withMessage("Ten san pham la bat buoc"),
+  body("price").isFloat({ gt: 0 }).withMessage("Gia phai lon hon 0"),
+  body("stock").isInt({ min: 0 }).withMessage("Ton kho phai >= 0"),
+  body("variants").optional().isArray().withMessage("variants phai la mang")
+];
 
-export default router;
+const updateProductValidation = [
+  body("name").optional().trim().notEmpty().withMessage("Ten san pham khong duoc de trong"),
+  body("price").optional().isFloat({ gt: 0 }).withMessage("Gia phai lon hon 0"),
+  body("stock").optional().isInt({ min: 0 }).withMessage("Ton kho phai >= 0"),
+  body("variants").optional().isArray().withMessage("variants phai la mang")
+];
+
+router.get("/", getProducts);
+router.get("/:id", getProductById);
+router.post("/", protect, adminOnly, productValidation, validate, createProduct);
+router.put("/:id", protect, adminOnly, updateProductValidation, validate, updateProduct);
+router.delete("/:id", protect, adminOnly, deleteProduct);
+
+module.exports = router;
