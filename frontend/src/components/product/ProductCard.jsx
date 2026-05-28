@@ -1,0 +1,66 @@
+import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import './ProductCard.css';
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
+export default function ProductCard({ product }) {
+  const { addToCart } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const handleQuickAdd = async (e) => {
+    e.preventDefault();
+    if (!user) { navigate('/login'); return; }
+    try {
+      setAdding(true);
+      await addToCart(product.id, 1, null);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } catch {}
+    finally { setAdding(false); }
+  };
+
+  return (
+    <Link to={`/products/${product.id}`} className="product-card">
+      <div className="product-card__image-wrap">
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="product-card__image"
+          loading="lazy"
+          onError={(e) => {
+            e.target.src = `https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format`;
+          }}
+        />
+        <div className="product-card__overlay">
+          <button
+            className={`product-card__quick-add${added ? ' added' : ''}`}
+            onClick={handleQuickAdd}
+            disabled={adding}
+          >
+            {adding ? '...' : added ? 'Đã thêm ✓' : 'Thêm vào giỏ'}
+          </button>
+        </div>
+        {product.stock < 5 && product.stock > 0 && (
+          <span className="product-card__tag">Sắp hết</span>
+        )}
+        {product.stock === 0 && (
+          <span className="product-card__tag product-card__tag--sold">Hết hàng</span>
+        )}
+      </div>
+
+      <div className="product-card__info">
+        <p className="product-card__category">{product.category?.name}</p>
+        <h3 className="product-card__name">{product.name}</h3>
+        <p className="product-card__price">{formatPrice(product.price)}</p>
+      </div>
+    </Link>
+  );
+}

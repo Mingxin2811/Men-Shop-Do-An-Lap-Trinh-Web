@@ -1,0 +1,230 @@
+.pdp {
+  padding-bottom: var(--spacing-3xl);
+}
+
+.pdp-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--spacing-lg) 0;
+  font-size: 0.75rem;
+  color: var(--mid-gray);
+}
+
+.pdp-breadcrumb a {
+  color: var(--mid-gray);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.pdp-breadcrumb a:hover { color: var(--black); }
+
+.pdp-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3xl);
+  align-items: start;
+}
+
+/* Gallery */
+.pdp-gallery__main {
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: var(--warm-gray);
+}
+
+.pdp-gallery__main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Info */
+.pdp-category {
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--mid-gray);
+  margin-bottom: var(--spacing-sm);
+}
+
+.pdp-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: var(--spacing-md);
+}
+
+.pdp-price {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--black);
+  font-family: var(--font-display);
+}
+
+.pdp-divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--spacing-xl) 0;
+}
+
+/* Options */
+.pdp-option {
+  margin-bottom: var(--spacing-xl);
+}
+
+.pdp-option__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pdp-option__selected {
+  color: var(--text-secondary);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pdp-size-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.pdp-size-btn {
+  min-width: 52px;
+  height: 44px;
+  padding: 0 var(--spacing-sm);
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.pdp-size-btn:hover {
+  border-color: var(--black);
+}
+
+.pdp-size-btn.active {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
+.pdp-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.pdp-color-btn {
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--white);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.pdp-color-btn:hover {
+  border-color: var(--black);
+}
+
+.pdp-color-btn.active {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
+.pdp-stock {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Quantity */
+.pdp-quantity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.pdp-qty-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 1.2rem;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  background: none;
+}
+
+.pdp-qty-btn:hover:not(:disabled) {
+  background: var(--offwhite);
+}
+
+.pdp-qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.pdp-qty-value {
+  min-width: 32px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+/* Actions */
+.pdp-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* Description */
+.pdp-description h6 {
+  margin-bottom: var(--spacing-md);
+}
+
+.pdp-description p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-weight: 300;
+}
+
+/* Related */
+.pdp-related {
+  margin-top: var(--spacing-3xl);
+  border-top: 1px solid var(--border);
+  padding-top: var(--spacing-2xl);
+}
+
+.pdp-related__title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 900px) {
+  .pdp-body {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+}
