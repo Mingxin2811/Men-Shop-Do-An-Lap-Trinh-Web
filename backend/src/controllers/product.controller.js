@@ -78,6 +78,59 @@ const getProducts = async (req, res, next) => {
   }
 };
 
+const getAdminProducts = async (req, res, next) => {
+  try {
+    const {
+      search,
+      category,
+      page = 1,
+      limit = 100,
+      sort = "newest",
+      status = "all"
+    } = req.query;
+
+    const take = Math.max(parseInt(limit, 10) || 100, 1);
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (currentPage - 1) * take;
+    const where = {};
+
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+
+    if (category) {
+      where.category = { slug: category };
+    }
+
+    if (status === "active") where.isActive = true;
+    if (status === "hidden") where.isActive = false;
+
+    let orderBy = { createdAt: "desc" };
+    if (sort === "price_asc") orderBy = { price: "asc" };
+    if (sort === "price_desc") orderBy = { price: "desc" };
+
+    const [products, totalProducts] = await prisma.$transaction([
+      prisma.product.findMany({
+        where,
+        include: { category: true, variants: true },
+        skip,
+        take,
+        orderBy
+      }),
+      prisma.product.count({ where })
+    ]);
+
+    return successResponse(res, "Lay danh sach san pham quan tri thanh cong", {
+      products,
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / take),
+      currentPage
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -98,7 +151,7 @@ const getProductById = async (req, res, next) => {
 
 const createProduct = async (req, res, next) => {
   try {
-    const { categoryId, name, description, price, imageUrl, stock, variants } = req.body;
+    const { categoryId, name, description, price, imageUrl, stock, variants, isActive } = req.body;
     const slug = slugify(name);
 
     const category = await prisma.category.findUnique({ where: { id: categoryId } });
@@ -120,6 +173,7 @@ const createProduct = async (req, res, next) => {
         price: Number(price),
         imageUrl: imageUrl || "",
         stock: Number(stock),
+        ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
         variants: {
           create: normalizeVariants(variants)
         }
@@ -136,7 +190,7 @@ const createProduct = async (req, res, next) => {
 const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { categoryId, name, description, price, imageUrl, stock, variants } = req.body;
+    const { categoryId, name, description, price, imageUrl, stock, variants, isActive } = req.body;
 
     const existingProduct = await prisma.product.findUnique({ where: { id } });
     if (!existingProduct) {
@@ -173,6 +227,7 @@ const updateProduct = async (req, res, next) => {
     if (price !== undefined) dataToUpdate.price = Number(price);
     if (imageUrl !== undefined) dataToUpdate.imageUrl = imageUrl || "";
     if (stock !== undefined) dataToUpdate.stock = Number(stock);
+    if (isActive !== undefined) dataToUpdate.isActive = Boolean(isActive);
 
     const product = await prisma.$transaction(async (tx) => {
       if (variants !== undefined) {
@@ -217,6 +272,7 @@ const deleteProduct = async (req, res, next) => {
 
 module.exports = {
   getProducts,
+  getAdminProducts,
   getProductById,
   createProduct,
   updateProduct,

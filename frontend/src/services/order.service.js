@@ -8,11 +8,6 @@ export const orderService = {
   updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
 };
 
-export const paymentService = {
-  createCheckoutSession: (orderId) =>
-    api.post('/payments/create-checkout-session', { orderId }),
-};
-
 export const adminService = {
   getDashboard: () => api.get('/admin/dashboard'),
   getUsers: (params) => api.get('/admin/users', { params }),

@@ -1,0 +1,18 @@
+services:
+  postgres:
+    ports: !override []
+
+  backend:
+    environment:
+      CLIENT_URL: http://localhost:5174
+      STRIPE_SUCCESS_URL: http://localhost:5174/payment-success
+      STRIPE_CANCEL_URL: http://localhost:5174/payment-cancel
+    ports: !override
+      - "5001:5000"
+
+  frontend:
+    build:
+      args:
+        VITE_API_URL: http://localhost:5001/api
+    ports: !override
+      - "5174:80"

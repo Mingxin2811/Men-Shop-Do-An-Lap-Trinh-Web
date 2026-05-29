@@ -4,6 +4,16 @@ import { productService, categoryService } from '../services/product.service';
 import ProductCard from '../components/product/ProductCard';
 import './ProductListPage.css';
 
+const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL'];
+const COLOR_OPTIONS = [
+  { label: 'Đen', value: 'Den' },
+  { label: 'Trắng', value: 'Trang' },
+  { label: 'Xám', value: 'Xam' },
+  { label: 'Xanh navy', value: 'Navy' },
+  { label: 'Nâu', value: 'Nau' },
+  { label: 'Be', value: 'Be' },
+];
+
 export default function ProductListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
@@ -19,6 +29,8 @@ export default function ProductListPage() {
   const currentPage = parseInt(searchParams.get('page') || '1');
   const currentMinPrice = searchParams.get('minPrice') || '';
   const currentMaxPrice = searchParams.get('maxPrice') || '';
+  const currentSize = searchParams.get('size') || '';
+  const currentColor = searchParams.get('color') || '';
   const [searchInput, setSearchInput] = useState(currentSearch);
 
   const fetchProducts = useCallback(async () => {
@@ -32,6 +44,8 @@ export default function ProductListPage() {
         ...(currentSearch && { search: currentSearch }),
         ...(currentMinPrice && { minPrice: currentMinPrice }),
         ...(currentMaxPrice && { maxPrice: currentMaxPrice }),
+        ...(currentSize && { size: currentSize }),
+        ...(currentColor && { color: currentColor }),
       };
       const res = await productService.getProducts(params);
       setProducts(res.data.data.products || []);
@@ -39,7 +53,7 @@ export default function ProductListPage() {
       setTotalProducts(res.data.data.totalProducts || 0);
     } catch { setProducts([]); }
     finally { setLoading(false); }
-  }, [currentPage, currentSort, currentCategory, currentSearch, currentMinPrice, currentMaxPrice]);
+  }, [currentPage, currentSort, currentCategory, currentSearch, currentMinPrice, currentMaxPrice, currentSize, currentColor]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -187,6 +201,38 @@ export default function ProductListPage() {
                   }}
                 >
                   {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Size</label>
+            <div className="filter-chip-grid">
+              {SIZE_OPTIONS.map(size => (
+                <button
+                  key={size}
+                  type="button"
+                  className={`filter-chip${currentSize === size ? ' active' : ''}`}
+                  onClick={() => updateParam('size', currentSize === size ? '' : size)}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Màu sắc</label>
+            <div className="filter-chip-grid">
+              {COLOR_OPTIONS.map(color => (
+                <button
+                  key={color.value}
+                  type="button"
+                  className={`filter-chip${currentColor === color.value ? ' active' : ''}`}
+                  onClick={() => updateParam('color', currentColor === color.value ? '' : color.value)}
+                >
+                  {color.label}
                 </button>
               ))}
             </div>

@@ -2,6 +2,7 @@ import api from './api';
 
 export const productService = {
   getProducts: (params) => api.get('/products', { params }),
+  getAdminProducts: (params) => api.get('/products/admin/all', { params }),
   getProduct: (id) => api.get(`/products/${id}`),
   createProduct: (data) => api.post('/products', data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data),

@@ -166,6 +166,12 @@
   margin-top: var(--spacing-sm);
 }
 
+.filter-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
 .filter-chip {
   padding: 6px 12px;
   font-size: 0.7rem;
@@ -179,6 +185,12 @@
 }
 
 .filter-chip:hover {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
+.filter-chip.active {
   background: var(--black);
   color: var(--white);
   border-color: var(--black);

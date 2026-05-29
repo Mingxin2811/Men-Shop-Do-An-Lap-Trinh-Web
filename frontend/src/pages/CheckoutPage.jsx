@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { orderService, paymentService } from '../services/order.service';
+import { orderService } from '../services/order.service';
+import { paymentService } from '../services/payment.service';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import './CheckoutPage.css';

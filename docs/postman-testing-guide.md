@@ -98,8 +98,8 @@ pm.environment.set("customerId", json.data.user.id);
 ### Login admin
 
 ```http
-POST {{baseUrl}}/api/auth/login
-Content-Type: application/json
+POST 
+Content-Type: application/json{{baseUrl}}/api/auth/login
 ```
 
 Body:
