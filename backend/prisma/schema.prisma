@@ -44,6 +44,8 @@ model User {
   address   String?
   role      UserRole   @default(CUSTOMER)
   isActive  Boolean    @default(true)
+  resetToken       String?
+  resetTokenExpiry DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   cartItems CartItem[]

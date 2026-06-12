@@ -83,4 +83,26 @@ const buildOrderConfirmationEmail = (order, user) => {
   return { subject, text, html };
 };
 
-module.exports = { sendMail, buildOrderConfirmationEmail };
+// Tao noi dung email dat lai mat khau.
+const buildPasswordResetEmail = (user, resetUrl) => {
+  const subject = "Đặt lại mật khẩu - Men's Shop";
+  const text =
+    `Xin chao ${user.name},\n\n` +
+    `Ban (hoac ai do) da yeu cau dat lai mat khau cho tai khoan Men's Shop.\n` +
+    `Nhan vao lien ket sau de dat lai mat khau (het han sau 1 gio):\n${resetUrl}\n\n` +
+    `Neu ban khong yeu cau, hay bo qua email nay.`;
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;">
+    <h2 style="font-weight:500;">Đặt lại mật khẩu</h2>
+    <p>Xin chào <strong>${user.name}</strong>,</p>
+    <p>Bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản Men's Shop.</p>
+    <p style="margin:24px 0;">
+      <a href="${resetUrl}" style="background:#0a0a0a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:4px;display:inline-block;">Đặt lại mật khẩu</a>
+    </p>
+    <p style="color:#888;font-size:13px;">Liên kết sẽ hết hạn sau 1 giờ. Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
+    <p style="color:#888;font-size:12px;word-break:break-all;">Hoặc dán liên kết: ${resetUrl}</p>
+  </div>`;
+  return { subject, text, html };
+};
+
+module.exports = { sendMail, buildOrderConfirmationEmail, buildPasswordResetEmail };

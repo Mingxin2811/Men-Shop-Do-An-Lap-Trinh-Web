@@ -5,7 +5,9 @@ const {
   login,
   getMe,
   updateProfile,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword
 } = require("../controllers/auth.controller");
 const protect = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
@@ -211,6 +213,23 @@ router.put(
   ],
   validate,
   changePassword
+);
+
+router.post(
+  "/forgot-password",
+  [body("email").isEmail().withMessage("Email khong hop le")],
+  validate,
+  forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  [
+    body("token").notEmpty().withMessage("Thieu token"),
+    body("newPassword").isLength({ min: 8 }).withMessage("Mat khau moi phai co it nhat 8 ky tu")
+  ],
+  validate,
+  resetPassword
 );
 
 module.exports = router;

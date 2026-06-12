@@ -78,6 +78,21 @@
   margin-bottom: var(--spacing-xl);
 }
 
+.auth-forgot {
+  text-align: right;
+  margin-top: var(--spacing-md);
+  font-size: 0.85rem;
+}
+
+.auth-forgot a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.auth-forgot a:hover {
+  color: var(--black);
+}
+
 .auth-switch {
   text-align: center;
   margin-top: var(--spacing-xl);

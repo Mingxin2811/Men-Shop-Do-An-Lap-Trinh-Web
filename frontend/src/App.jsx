@@ -11,7 +11,7 @@ import { PrivateRoute, AdminRoute } from './routes/ProtectedRoutes';
 import HomePage from './pages/HomePage';
 import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
-import { LoginPage, RegisterPage } from './pages/AuthPages';
+import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from './pages/AuthPages';
 import CartPage from './pages/CartPage';
 import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -45,6 +45,8 @@ export default function App() {
                     <Route path="/wishlist" element={<WishlistPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/payment-success" element={<PaymentSuccessPage />} />
                     <Route path="/payment-cancel" element={<PaymentCancelPage />} />
 
