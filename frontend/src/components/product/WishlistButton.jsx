@@ -1,14 +1,18 @@
 import { useWishlist } from '../../contexts/WishlistContext';
+import { useToast } from '../../contexts/ToastContext';
 import './WishlistButton.css';
 
 export default function WishlistButton({ productId, className = '', size = 20 }) {
   const { has, toggle } = useWishlist();
+  const toast = useToast();
   const active = has(productId);
 
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     toggle(productId);
+    if (active) toast.info('Đã bỏ khỏi danh sách yêu thích');
+    else toast.success('Đã thêm vào danh sách yêu thích ❤');
   };
 
   return (

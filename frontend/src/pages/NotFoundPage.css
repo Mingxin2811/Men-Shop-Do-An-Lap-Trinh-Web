@@ -1,0 +1,39 @@
+.notfound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 80vh;
+  padding-top: 64px;
+  gap: var(--spacing-sm);
+}
+
+.notfound__code {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 18vw, 10rem);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--warm-gray);
+  letter-spacing: 0.05em;
+}
+
+.notfound__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 500;
+}
+
+.notfound__desc {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 440px;
+}
+
+.notfound__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  justify-content: center;
+}

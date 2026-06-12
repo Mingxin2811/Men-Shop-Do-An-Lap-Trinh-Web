@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { productService, categoryService } from '../services/product.service';
 import ProductCard from '../components/product/ProductCard';
+import ProductCardSkeleton from '../components/product/ProductCardSkeleton';
 import './ProductListPage.css';
 
 const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -255,7 +256,9 @@ export default function ProductListPage() {
         {/* Product grid */}
         <div className="plp-products">
           {loading ? (
-            <div className="loading-center"><div className="spinner spinner-lg" /></div>
+            <div className="product-grid">
+              {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+            </div>
           ) : products.length === 0 ? (
             <div className="plp-empty">
               <p>Không tìm thấy sản phẩm phù hợp.</p>

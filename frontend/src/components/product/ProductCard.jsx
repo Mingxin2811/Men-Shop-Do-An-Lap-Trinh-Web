@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import WishlistButton from './WishlistButton';
 import './ProductCard.css';
@@ -12,6 +13,7 @@ const formatPrice = (price) =>
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -27,8 +29,11 @@ export default function ProductCard({ product }) {
       setAdding(true);
       await addToCart(product.id, 1, null);
       setAdded(true);
+      toast.success('Đã thêm vào giỏ hàng');
       setTimeout(() => setAdded(false), 2000);
-    } catch {}
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể thêm vào giỏ hàng');
+    }
     finally { setAdding(false); }
   };
 

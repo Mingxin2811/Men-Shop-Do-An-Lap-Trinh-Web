@@ -3,8 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../services/product.service';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { useRecentlyViewed } from '../contexts/RecentlyViewedContext';
 import { formatProductColor, normalizeProductColor } from '../utils/productOptions';
 import WishlistButton from '../components/product/WishlistButton';
+import SizeGuideModal from '../components/product/SizeGuideModal';
+import RecentlyViewedSection from '../components/product/RecentlyViewedSection';
 import './ProductDetailPage.css';
 
 const formatPrice = (p) =>
@@ -14,6 +18,8 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const toast = useToast();
+  const { track } = useRecentlyViewed();
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
@@ -26,6 +32,7 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -40,6 +47,7 @@ export default function ProductDetailPage() {
           })) || [],
         };
         setProduct(p);
+        track(p.id);
         setSelectedSize('');
         setSelectedColor('');
         setSelectedVariant(null);
@@ -50,7 +58,7 @@ export default function ProductDetailPage() {
       })
       .catch(() => navigate('/products'))
       .finally(() => setLoading(false));
-  }, [id, navigate]);
+  }, [id, navigate, track]);
 
   useEffect(() => {
     if (!product) return;
@@ -81,9 +89,12 @@ export default function ProductDetailPage() {
       setError('');
       await addToCart(product.id, quantity, selectedVariant?.id || null);
       setSuccess('Đã thêm vào giỏ hàng!');
+      toast.success('Đã thêm vào giỏ hàng');
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
-      setError(e.response?.data?.message || 'Có lỗi xảy ra.');
+      const msg = e.response?.data?.message || 'Có lỗi xảy ra.';
+      setError(msg);
+      toast.error(msg);
     } finally { setAdding(false); }
   };
 
@@ -129,8 +140,13 @@ export default function ProductDetailPage() {
           {sizes.length > 0 && (
             <div className="pdp-option">
               <div className="pdp-option__header">
-                <span>Size</span>
-                {selectedSize && <span className="pdp-option__selected">{selectedSize}</span>}
+                <span>Size{selectedSize && <span className="pdp-option__selected"> — {selectedSize}</span>}</span>
+                <button type="button" className="pdp-size-guide" onClick={() => setSizeGuideOpen(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M3 7h18M3 12h18M3 17h18" /><path d="M7 5v4M12 5v6M17 5v4" />
+                  </svg>
+                  Hướng dẫn chọn size
+                </button>
               </div>
               <div className="pdp-size-grid">
                 {sizes.map(s => (
@@ -240,6 +256,12 @@ export default function ProductDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Sản phẩm vừa xem */}
+      <RecentlyViewedSection excludeId={product.id} />
+
+      {/* Modal bảng size */}
+      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
     </div>
   );
 }

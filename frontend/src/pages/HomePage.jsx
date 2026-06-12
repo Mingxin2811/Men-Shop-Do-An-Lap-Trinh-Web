@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productService, categoryService } from '../services/product.service';
 import ProductCard from '../components/product/ProductCard';
+import ProductCardSkeleton from '../components/product/ProductCardSkeleton';
 import mensFashionHero from '../assets/mens-fashion-collection-hero.png';
 import './HomePage.css';
 
@@ -114,7 +115,9 @@ export default function HomePage() {
           </Link>
         </div>
         {loading ? (
-          <div className="loading-center"><div className="spinner spinner-lg" /></div>
+          <div className="product-grid">
+            {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+          </div>
         ) : (
           <div className="product-grid">
             {newProducts.map(p => <ProductCard key={p.id} product={p} />)}

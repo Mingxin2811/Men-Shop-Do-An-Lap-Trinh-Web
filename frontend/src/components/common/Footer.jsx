@@ -1,7 +1,31 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useToast } from '../../contexts/ToastContext';
 import './Footer.css';
 
 export default function Footer() {
+  const toast = useToast();
+  const [email, setEmail] = useState('');
+
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    const value = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      toast.error('Vui lòng nhập email hợp lệ');
+      return;
+    }
+    // Lưu tạm danh sách email đăng ký phía client (chưa có API backend).
+    try {
+      const list = JSON.parse(localStorage.getItem('newsletter') || '[]');
+      if (!list.includes(value)) {
+        list.push(value);
+        localStorage.setItem('newsletter', JSON.stringify(list));
+      }
+    } catch { /* bỏ qua lỗi localStorage */ }
+    setEmail('');
+    toast.success('Đăng ký nhận tin thành công!');
+  };
+
   return (
     <footer className="footer">
       <div className="container">
@@ -12,6 +36,20 @@ export default function Footer() {
               <small>SHOP</small>
             </div>
             <p>Phong cách sống của người đàn ông hiện đại.<br/>Thời trang tinh tế — Chất lượng bền vững.</p>
+
+            <form className="footer__newsletter" onSubmit={handleSubscribe}>
+              <label htmlFor="footer-news">Đăng ký nhận ưu đãi &amp; bộ sưu tập mới</label>
+              <div className="footer__newsletter-row">
+                <input
+                  id="footer-news"
+                  type="email"
+                  placeholder="Email của bạn"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button type="submit" aria-label="Đăng ký">→</button>
+              </div>
+            </form>
           </div>
 
           <div className="footer__col">

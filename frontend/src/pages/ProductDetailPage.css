@@ -93,6 +93,25 @@
   letter-spacing: 0;
 }
 
+.pdp-size-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.pdp-size-guide:hover {
+  color: var(--black);
+  border-color: var(--black);
+}
+
 .pdp-size-grid {
   display: flex;
   flex-wrap: wrap;
