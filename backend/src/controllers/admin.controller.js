@@ -39,7 +39,7 @@ const getDashboardStats = async (req, res, next) => {
 
 const getUsers = async (req, res, next) => {
   try {
-    const { search, page = 1, limit = 10 } = req.query;
+    const { search, isActive, page = 1, limit = 10 } = req.query;
     const take = Math.max(parseInt(limit, 10) || 10, 1);
     const currentPage = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (currentPage - 1) * take;
@@ -50,6 +50,10 @@ const getUsers = async (req, res, next) => {
         { name: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } }
       ];
+    }
+
+    if (isActive === "true" || isActive === "false") {
+      where.isActive = isActive === "true";
     }
 
     const [users, totalUsers] = await prisma.$transaction([
@@ -77,6 +81,33 @@ const getUsers = async (req, res, next) => {
       totalPages: Math.ceil(totalUsers / take),
       currentPage
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getUserOrders = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findFirst({
+      where: { id, role: "CUSTOMER" },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return errorResponse(res, "Khong tim thay khach hang", 404);
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { userId: id },
+      include: {
+        items: true,
+        payment: true
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return successResponse(res, "Lay lich su mua hang thanh cong", orders);
   } catch (error) {
     return next(error);
   }
@@ -111,5 +142,6 @@ const updateUserStatus = async (req, res, next) => {
 module.exports = {
   getDashboardStats,
   getUsers,
+  getUserOrders,
   updateUserStatus
 };

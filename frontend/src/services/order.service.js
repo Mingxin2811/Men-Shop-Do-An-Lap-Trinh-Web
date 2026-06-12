@@ -11,6 +11,7 @@ export const orderService = {
 export const adminService = {
   getDashboard: () => api.get('/admin/dashboard'),
   getUsers: (params) => api.get('/admin/users', { params }),
+  getUserOrders: (id) => api.get(`/admin/users/${id}/orders`),
   updateUserStatus: (id, isActive) =>
     api.put(`/admin/users/${id}/status`, { isActive }),
 };

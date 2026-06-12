@@ -1,108 +1,227 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { categoryService } from '../../services/product.service';
-import { orderService, adminService } from '../../services/order.service';
+import { adminService, orderService } from '../../services/order.service';
 
-const formatPrice = (p) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
-const formatDate = (d) =>
-  new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(d));
+const formatPrice = (price) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+const formatDate = (date) =>
+  new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(date));
 
-// ── Categories ──────────────────────────────────────────
+function ConfirmModal({
+  title,
+  message,
+  confirmText,
+  confirmClassName = 'btn-primary',
+  loading,
+  error,
+  onConfirm,
+  onClose,
+}) {
+  return (
+    <div className="admin-modal-overlay" onClick={() => !loading && onClose()}>
+      <div className="admin-modal admin-confirm-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="admin-modal__header">
+          <h3>{title}</h3>
+          <button type="button" onClick={onClose} disabled={loading} aria-label="Đóng">
+            ×
+          </button>
+        </div>
+        <p className="admin-confirm-modal__message">{message}</p>
+        {error && <div className="alert alert-error">{error}</div>}
+        <div className="admin-confirm-modal__actions">
+          <button type="button" className="btn btn-outline btn-sm" onClick={onClose} disabled={loading}>
+            Hủy
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${confirmClassName}`}
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? <span className="spinner" /> : confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminCategoriesPage() {
-  const [cats, setCats] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
-  const fetch = async () => {
+  const loadCategories = async () => {
     setLoading(true);
-    try { const res = await categoryService.getCategories(); setCats(res.data.data || []); }
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetch(); }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(''); setSaving(true);
     try {
-      if (editing) await categoryService.updateCategory(editing.id, form);
-      else await categoryService.createCategory(form);
-      await fetch();
-      setShowForm(false);
-    } catch (e) { setError(e.response?.data?.message || 'Có lỗi xảy ra.'); }
-    finally { setSaving(false); }
+      const response = await categoryService.getCategories();
+      setCategories(response.data.data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Xóa danh mục này?')) return;
-    try { await categoryService.deleteCategory(id); await fetch(); }
-    catch (e) { alert(e.response?.data?.message || 'Không thể xóa.'); }
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const openCreateForm = () => {
+    setEditing(null);
+    setForm({ name: '', description: '' });
+    setError('');
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      if (editing) {
+        await categoryService.updateCategory(editing.id, form);
+        setNotice('Cập nhật danh mục thành công.');
+      } else {
+        await categoryService.createCategory(form);
+        setNotice('Thêm danh mục mới thành công.');
+      }
+      await loadCategories();
+      setShowForm(false);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Có lỗi xảy ra.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await categoryService.deleteCategory(deleteTarget.id);
+      await loadCategories();
+      setDeleteTarget(null);
+      setNotice('Xóa danh mục thành công.');
+    } catch (requestError) {
+      setDeleteError(requestError.response?.data?.message || 'Không thể xóa danh mục.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
     <div>
       <div className="admin-page-header">
         <h1>Danh mục</h1>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setForm({ name: '', description: '' }); setShowForm(true); }}>
+        <button className="btn btn-primary" onClick={openCreateForm}>
           + Thêm danh mục
         </button>
       </div>
 
+      {notice && (
+        <div className="alert alert-success admin-page-notice">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice('')} aria-label="Đóng thông báo">×</button>
+        </div>
+      )}
+
       {showForm && (
-        <div className="admin-modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+        <div className="admin-modal-overlay" onClick={() => !saving && setShowForm(false)}>
+          <div className="admin-modal" onClick={(event) => event.stopPropagation()}>
             <div className="admin-modal__header">
               <h3>{editing ? 'Sửa danh mục' : 'Thêm danh mục'}</h3>
-              <button onClick={() => setShowForm(false)}>✕</button>
+              <button type="button" onClick={() => setShowForm(false)} disabled={saving}>×</button>
             </div>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Tên danh mục *</label>
-                <input className="form-input" value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+                <input
+                  className="form-input"
+                  value={form.name}
+                  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Mô tả</label>
-                <textarea className="form-input" rows={3} value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+                <textarea
+                  className="form-input"
+                  rows={3}
+                  value={form.description}
+                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                />
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+              <div className="admin-modal__footer">
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowForm(false)}>
+                  Hủy
+                </button>
+                <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
                   {saving ? <span className="spinner" /> : 'Lưu'}
                 </button>
-                <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Hủy</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {deleteTarget && (
+        <ConfirmModal
+          title="Xóa danh mục"
+          message={`Bạn có chắc muốn xóa danh mục “${deleteTarget.name}”? Danh mục đang có sản phẩm sẽ không thể xóa.`}
+          confirmText="Xóa danh mục"
+          confirmClassName="btn-danger"
+          loading={deleting}
+          error={deleteError}
+          onConfirm={handleDelete}
+          onClose={() => {
+            setDeleteTarget(null);
+            setDeleteError('');
+          }}
+        />
+      )}
+
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>
       ) : (
-        <div style={{ background: 'white', border: '1px solid var(--border)', overflowX: 'auto' }}>
+        <div className="admin-table-card">
           <table className="table">
-            <thead><tr><th>Tên</th><th>Slug</th><th>Sản phẩm</th><th>Mô tả</th><th>Hành động</th></tr></thead>
+            <thead>
+              <tr><th>Tên</th><th>Sản phẩm</th><th>Mô tả</th><th>Hành động</th></tr>
+            </thead>
             <tbody>
-              {cats.map(c => (
-                <tr key={c.id}>
-                  <td style={{ fontWeight: 500 }}>{c.name}</td>
-                  <td style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>{c.slug}</td>
-                  <td>{c._count?.products || 0}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', maxWidth: 200 }}>{c.description}</td>
+              {categories.map((category) => (
+                <tr key={category.id}>
+                  <td className="font-medium">{category.name}</td>
+                  <td>{category._count?.products || 0}</td>
+                  <td className="admin-table-description">{category.description || '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn btn-outline btn-sm"
-                        onClick={() => { setEditing(c); setForm({ name: c.name, description: c.description || '' }); setShowForm(true); }}>
+                    <div className="admin-row-actions">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => {
+                          setEditing(category);
+                          setForm({ name: category.name, description: category.description || '' });
+                          setError('');
+                          setShowForm(true);
+                        }}
+                      >
                         Sửa
                       </button>
-                      <button className="btn btn-sm" style={{ border: '1px solid var(--red)', color: 'var(--red)' }}
-                        onClick={() => handleDelete(c.id)}>Xóa</button>
+                      <button className="btn btn-danger-outline btn-sm" onClick={() => setDeleteTarget(category)}>
+                        Xóa
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -115,86 +234,142 @@ export function AdminCategoriesPage() {
   );
 }
 
-// ── Orders ──────────────────────────────────────────────
 const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
-const STATUS_LABELS = { PENDING: 'Chờ xử lý', CONFIRMED: 'Xác nhận', SHIPPING: 'Đang giao', COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy' };
-const STATUS_COLORS = { PENDING: '#d97706', CONFIRMED: '#2563eb', SHIPPING: '#7c3aed', COMPLETED: '#16a34a', CANCELLED: '#dc2626' };
+const STATUS_LABELS = {
+  PENDING: 'Chờ xử lý',
+  CONFIRMED: 'Đã xác nhận',
+  SHIPPING: 'Đang giao',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+};
+const PAYMENT_LABELS = {
+  UNPAID: 'Chưa thanh toán',
+  PENDING: 'Đang xử lý',
+  PAID: 'Đã thanh toán',
+  FAILED: 'Thất bại',
+  REFUNDED: 'Đã hoàn tiền',
+};
 
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [updating, setUpdating] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [updateError, setUpdateError] = useState('');
 
-  const fetch = async () => {
+  const loadOrders = async () => {
     setLoading(true);
     try {
-      const res = await orderService.getAllOrders({ status: statusFilter || undefined, limit: 50 });
-      setOrders(res.data.data.orders || []);
-    } finally { setLoading(false); }
+      const response = await orderService.getAllOrders({ status: statusFilter || undefined, limit: 50 });
+      setOrders(response.data.data.orders || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetch(); }, [statusFilter]);
+  useEffect(() => {
+    loadOrders();
+  }, [statusFilter]);
 
-  const handleStatusUpdate = async (id, status) => {
+  const updateStatus = async (id, status) => {
     setUpdating(id);
-    try { await orderService.updateOrderStatus(id, status); await fetch(); }
-    catch (e) { alert(e.response?.data?.message || 'Có lỗi xảy ra.'); }
-    finally { setUpdating(null); }
+    setUpdateError('');
+    try {
+      await orderService.updateOrderStatus(id, status);
+      await loadOrders();
+      setCancelTarget(null);
+    } catch (requestError) {
+      setUpdateError(requestError.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleStatusChange = (order, nextStatus) => {
+    if (nextStatus === 'CANCELLED') {
+      setUpdateError('');
+      setCancelTarget(order);
+      return;
+    }
+    updateStatus(order.id, nextStatus);
   };
 
   return (
     <div>
       <div className="admin-page-header">
         <h1>Đơn hàng</h1>
-        <select className="form-select" style={{ width: 200 }} value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}>
+        <select
+          className="form-select admin-header-control"
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+        >
           <option value="">Tất cả trạng thái</option>
-          {ORDER_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+          {ORDER_STATUSES.map((status) => (
+            <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+          ))}
         </select>
       </div>
+
+      {updateError && !cancelTarget && <div className="alert alert-error">{updateError}</div>}
+
+      {cancelTarget && (
+        <ConfirmModal
+          title="Hủy đơn hàng"
+          message={`Admin có quyền hủy đơn #${cancelTarget.id.slice(-8).toUpperCase()}. Bạn có chắc muốn chuyển đơn này sang trạng thái “Đã hủy”?`}
+          confirmText="Xác nhận hủy"
+          confirmClassName="btn-danger"
+          loading={updating === cancelTarget.id}
+          error={updateError}
+          onConfirm={() => updateStatus(cancelTarget.id, 'CANCELLED')}
+          onClose={() => {
+            setCancelTarget(null);
+            setUpdateError('');
+          }}
+        />
+      )}
 
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>
       ) : (
-        <div style={{ background: 'white', border: '1px solid var(--border)', overflowX: 'auto' }}>
+        <div className="admin-table-card">
           <table className="table">
-            <thead><tr>
-              <th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th>
-              <th>Tổng tiền</th><th>TT TT</th><th>Trạng thái</th><th>Cập nhật</th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th>Tổng tiền</th>
+                <th>Trạng thái thanh toán</th><th>Trạng thái đơn hàng</th><th>Cập nhật</th>
+              </tr>
+            </thead>
             <tbody>
-              {orders.map(o => (
-                <tr key={o.id}>
-                  <td style={{ fontWeight: 500, fontSize: '0.8rem' }}>#{o.id.slice(-8).toUpperCase()}</td>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td className="admin-order-code">#{order.id.slice(-8).toUpperCase()}</td>
                   <td>
-                    <p style={{ fontSize: '16px' }}>{o.user?.name}</p>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--mid-gray)' }}>{o.user?.email}</p>
+                    <p>{order.user?.name}</p>
+                    <p className="admin-cell-subtext">{order.user?.email}</p>
                   </td>
-                  <td style={{ fontSize: '0.8rem', color: 'var(--mid-gray)' }}>{formatDate(o.createdAt)}</td>
-                  <td style={{ fontWeight: 500 }}>{formatPrice(o.totalAmount)}</td>
+                  <td className="admin-cell-muted">{formatDate(order.createdAt)}</td>
+                  <td className="font-medium">{formatPrice(order.totalAmount)}</td>
                   <td>
-                    <span style={{ fontSize: '0.7rem', color: o.paymentStatus === 'PAID' ? '#16a34a' : '#d97706' }}>
-                      {o.paymentStatus}
+                    <span className={`admin-payment-status ${order.paymentStatus?.toLowerCase()}`}>
+                      {PAYMENT_LABELS[order.paymentStatus] || order.paymentStatus}
                     </span>
                   </td>
                   <td>
-                    <span style={{
-                      display: 'inline-block', padding: '3px 8px', fontSize: '0.65rem',
-                      color: STATUS_COLORS[o.status], border: `1px solid ${STATUS_COLORS[o.status]}`
-                    }}>
-                      {STATUS_LABELS[o.status]}
+                    <span className={`admin-order-status ${order.status.toLowerCase()}`}>
+                      {STATUS_LABELS[order.status]}
                     </span>
                   </td>
                   <td>
                     <select
-                      className="form-select"
-                      style={{ width: 130, fontSize: '0.75rem', padding: '6px 8px' }}
-                      value={o.status}
-                      disabled={updating === o.id}
-                      onChange={e => handleStatusUpdate(o.id, e.target.value)}
+                      className="form-select admin-status-select"
+                      value={order.status}
+                      disabled={updating === order.id}
+                      onChange={(event) => handleStatusChange(order, event.target.value)}
                     >
-                      {ORDER_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+                      {ORDER_STATUSES.map((status) => (
+                        <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                      ))}
                     </select>
                   </td>
                 </tr>
@@ -207,77 +382,203 @@ export function AdminOrdersPage() {
   );
 }
 
-// ── Users ──────────────────────────────────────────────
 export function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [updating, setUpdating] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [toggleTarget, setToggleTarget] = useState(null);
+  const [updating, setUpdating] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [historyTarget, setHistoryTarget] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
 
-  const fetch = async () => {
+  const loadUsers = async (searchValue = search, statusValue = statusFilter) => {
     setLoading(true);
     try {
-      const res = await adminService.getUsers({ search: search || undefined, limit: 50 });
-      setUsers(res.data.data.users || []);
-    } finally { setLoading(false); }
+      const response = await adminService.getUsers({
+        search: searchValue.trim() || undefined,
+        isActive: statusValue || undefined,
+        limit: 50,
+      });
+      setUsers(response.data.data.users || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => loadUsers(search, statusFilter), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [search, statusFilter]);
 
-  const handleToggle = async (id, isActive) => {
-    setUpdating(id);
-    try { await adminService.updateUserStatus(id, !isActive); await fetch(); }
-    finally { setUpdating(null); }
+  const handleToggle = async () => {
+    setUpdating(true);
+    setActionError('');
+    try {
+      await adminService.updateUserStatus(toggleTarget.id, !toggleTarget.isActive);
+      await loadUsers();
+      setToggleTarget(null);
+    } catch (requestError) {
+      setActionError(requestError.response?.data?.message || 'Không thể cập nhật trạng thái tài khoản.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const openHistory = async (user) => {
+    setHistoryTarget(user);
+    setHistory([]);
+    setHistoryError('');
+    setHistoryLoading(true);
+    try {
+      const response = await adminService.getUserOrders(user.id);
+      setHistory(response.data.data || []);
+    } catch (requestError) {
+      setHistoryError(requestError.response?.data?.message || 'Không thể tải lịch sử mua hàng.');
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   return (
     <div>
-      <div className="admin-page-header">
+      <div className="admin-page-header admin-page-header--users">
         <h1>Người dùng</h1>
-        <form onSubmit={e => { e.preventDefault(); fetch(); }} style={{ display: 'flex', gap: '8px' }}>
-          <input className="form-input" style={{ width: 240 }} placeholder="Tìm kiếm..." value={search}
-            onChange={e => setSearch(e.target.value)} />
-          <button type="submit" className="btn btn-primary btn-sm">Tìm</button>
-        </form>
+        <div className="admin-user-filters">
+          <input
+            className="form-input"
+            placeholder="Tìm theo tên hoặc email..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <select
+            className="form-select"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="true">Hoạt động</option>
+            <option value="false">Bị khóa</option>
+          </select>
+        </div>
       </div>
+
+      {toggleTarget && (
+        <ConfirmModal
+          title={toggleTarget.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+          message={
+            toggleTarget.isActive
+              ? `Bạn có chắc muốn khóa tài khoản của “${toggleTarget.name}”? Người dùng sẽ không thể đăng nhập.`
+              : `Bạn có chắc muốn mở khóa tài khoản của “${toggleTarget.name}”?`
+          }
+          confirmText={toggleTarget.isActive ? 'Khóa tài khoản' : 'Mở khóa'}
+          confirmClassName={toggleTarget.isActive ? 'btn-danger' : 'btn-primary'}
+          loading={updating}
+          error={actionError}
+          onConfirm={handleToggle}
+          onClose={() => {
+            setToggleTarget(null);
+            setActionError('');
+          }}
+        />
+      )}
+
+      {historyTarget && (
+        <div className="admin-modal-overlay" onClick={() => setHistoryTarget(null)}>
+          <div className="admin-modal admin-history-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="admin-modal__header">
+              <div>
+                <h3>Lịch sử mua hàng</h3>
+                <p className="admin-modal__subtitle">{historyTarget.name} · {historyTarget.email}</p>
+              </div>
+              <button type="button" onClick={() => setHistoryTarget(null)} aria-label="Đóng">×</button>
+            </div>
+            {historyLoading ? (
+              <div className="loading-center admin-history-loading"><div className="spinner spinner-lg" /></div>
+            ) : historyError ? (
+              <div className="alert alert-error">{historyError}</div>
+            ) : history.length === 0 ? (
+              <div className="admin-empty-state">Khách hàng chưa có đơn mua nào.</div>
+            ) : (
+              <div className="admin-history-list">
+                {history.map((order) => (
+                  <article className="admin-history-item" key={order.id}>
+                    <div>
+                      <strong>#{order.id.slice(-8).toUpperCase()}</strong>
+                      <span>{formatDate(order.createdAt)} · {order.items.length} sản phẩm</span>
+                    </div>
+                    <div className="admin-history-item__right">
+                      <strong>{formatPrice(order.totalAmount)}</strong>
+                      <span className={`admin-order-status ${order.status.toLowerCase()}`}>
+                        {STATUS_LABELS[order.status]}
+                      </span>
+                    </div>
+                    <div className="admin-history-products">
+                      {order.items.map((item) => (
+                        <span key={item.id}>
+                          {item.productName} × {item.quantity}
+                          {item.size || item.color ? ` (${[item.size, item.color].filter(Boolean).join(', ')})` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>
       ) : (
-        <div style={{ background: 'white', border: '1px solid var(--border)', overflowX: 'auto' }}>
+        <div className="admin-table-card">
           <table className="table">
-            <thead><tr>
-              <th>Tên</th><th>Email</th><th>SĐT</th><th>Ngày đăng ký</th><th>Trạng thái</th><th>Hành động</th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th>Tên</th><th>Email</th><th>SĐT</th><th>Ngày đăng ký</th>
+                <th>Trạng thái</th><th>Hành động</th>
+              </tr>
+            </thead>
             <tbody>
-              {users.map(u => (
-                <tr key={u.id}>
-                  <td style={{ fontWeight: 500 }}>{u.name}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>{u.email}</td>
-                  <td style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>{u.phone || '—'}</td>
-                  <td style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>{formatDate(u.createdAt)}</td>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td className="font-medium">{user.name}</td>
+                  <td>{user.email}</td>
+                  <td className="admin-cell-muted">{user.phone || '—'}</td>
+                  <td className="admin-cell-muted">{formatDate(user.createdAt)}</td>
                   <td>
-                    <span className={`badge ${u.isActive ? 'badge-dark' : 'badge-light'}`}>
-                      {u.isActive ? 'Hoạt động' : 'Bị khóa'}
+                    <span className={`admin-user-status ${user.isActive ? 'active' : 'locked'}`}>
+                      <span />
+                      {user.isActive ? 'Hoạt động' : 'Bị khóa'}
                     </span>
                   </td>
                   <td>
-                    <button
-                      className="btn btn-sm"
-                      style={{
-                        border: `1px solid ${u.isActive ? 'var(--red)' : 'var(--black)'}`,
-                        color: u.isActive ? 'var(--red)' : 'var(--black)'
-                      }}
-                      disabled={updating === u.id}
-                      onClick={() => handleToggle(u.id, u.isActive)}
-                    >
-                      {updating === u.id ? '...' : u.isActive ? 'Khóa' : 'Mở khóa'}
-                    </button>
+                    <div className="admin-row-actions">
+                      <button className="btn btn-outline btn-sm" onClick={() => openHistory(user)}>
+                        Lịch sử
+                      </button>
+                      <button
+                        className={`btn btn-sm ${user.isActive ? 'btn-danger-outline' : 'btn-primary'}`}
+                        onClick={() => {
+                          setActionError('');
+                          setToggleTarget(user);
+                        }}
+                      >
+                        {user.isActive ? 'Khóa' : 'Mở khóa'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {!loading && users.length === 0 && (
+            <div className="admin-empty-state">Không tìm thấy người dùng phù hợp.</div>
+          )}
         </div>
       )}
     </div>

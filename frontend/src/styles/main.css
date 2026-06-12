@@ -146,6 +146,28 @@ input, textarea, select {
   color: var(--white);
 }
 
+.btn-danger {
+  background: var(--red);
+  color: var(--white);
+  border: 1px solid var(--red);
+}
+
+.btn-danger:hover {
+  background: #a92f2f;
+  border-color: #a92f2f;
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.btn-danger-outline:hover {
+  background: var(--red);
+  color: var(--white);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--black);

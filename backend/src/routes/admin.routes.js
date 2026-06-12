@@ -3,6 +3,7 @@ const { body } = require("express-validator");
 const {
   getDashboardStats,
   getUsers,
+  getUserOrders,
   updateUserStatus
 } = require("../controllers/admin.controller");
 const protect = require("../middlewares/auth.middleware");
@@ -15,6 +16,7 @@ router.use(protect, adminOnly);
 
 router.get("/dashboard", getDashboardStats);
 router.get("/users", getUsers);
+router.get("/users/:id/orders", getUserOrders);
 router.put(
   "/users/:id/status",
   [body("isActive").isBoolean().withMessage("isActive phai la boolean")],
