@@ -37,7 +37,7 @@
   font-size: 0.825rem;
   color: rgba(255,255,255,0.5);
   line-height: 1.8;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .footer__col h6 {
@@ -60,7 +60,7 @@
   color: rgba(255,255,255,0.6);
   text-decoration: none;
   transition: color 0.2s;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .footer__col ul li a:hover {
@@ -89,7 +89,7 @@
   padding-top: var(--spacing-lg);
   font-size: 0.75rem;
   color: rgba(255,255,255,0.3);
-  font-weight: 300;
+  font-weight: 400;
 }
 
 @media (max-width: 900px) {

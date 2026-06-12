@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { productService, categoryService } from '../../services/product.service';
+import { formatProductColor, normalizeProductColor } from '../../utils/productOptions';
 
 const formatPrice = (p) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p || 0);
@@ -18,7 +19,7 @@ function defaultForm(product) {
     variants: product.variants?.length
       ? product.variants.map(v => ({
           size: v.size || '',
-          color: v.color || '',
+          color: formatProductColor(v.color || ''),
           stock: v.stock ?? 0,
         }))
       : [],
@@ -45,26 +46,51 @@ export default function AdminProductsPage() {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [statusTarget, setStatusTarget] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusError, setStatusError] = useState('');
+  const requestIdRef = useRef(0);
+  const variantStockTotal = form.variants.reduce(
+    (total, variant) => total + (parseInt(variant.stock, 10) || 0),
+    0
+  );
+  const enteredStock = parseInt(form.stock, 10);
+  const hasVariantStockMismatch =
+    form.variants.length > 0 &&
+    Number.isFinite(enteredStock) &&
+    enteredStock !== variantStockTotal;
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (searchValue = search, statusValue = statusFilter) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
-      const [pRes, cRes] = await Promise.all([
-        productService.getAdminProducts({
-          limit: 100,
-          status: statusFilter,
-          ...(search && { search }),
-        }),
-        categoryService.getCategories(),
-      ]);
-      setProducts(pRes.data.data.products || []);
-      setCategories(cRes.data.data || []);
+      const pRes = await productService.getAdminProducts({
+        limit: 100,
+        status: statusValue,
+        ...(searchValue.trim() && { search: searchValue.trim() }),
+      });
+      if (requestId === requestIdRef.current) {
+        setProducts(pRes.data.data.products || []);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => { fetchProducts(); }, [statusFilter]);
+  useEffect(() => {
+    categoryService.getCategories()
+      .then(res => setCategories(res.data.data || []));
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchProducts(search, statusFilter);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [search, statusFilter]);
 
   const handleEdit = (product) => {
     setEditing(product.id);
@@ -105,7 +131,7 @@ export default function AdminProductsPage() {
       .filter(v => v.size.trim() && v.color.trim())
       .map(v => ({
         size: v.size.trim(),
-        color: v.color.trim(),
+        color: normalizeProductColor(v.color),
         stock: parseInt(v.stock, 10) || 0,
       })),
   });
@@ -113,6 +139,9 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (hasVariantStockMismatch) {
+      return;
+    }
     setSaving(true);
     try {
       const data = buildPayload();
@@ -127,16 +156,19 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleToggleStatus = async (product) => {
-    const nextStatus = !product.isActive;
-    const label = nextStatus ? 'hiển thị lại' : 'ẩn';
-    if (!confirm(`Bạn muốn ${label} sản phẩm này?`)) return;
-
+  const handleConfirmStatus = async () => {
+    if (!statusTarget) return;
+    const nextStatus = !statusTarget.isActive;
+    setUpdatingStatus(true);
+    setStatusError('');
     try {
-      await productService.updateProduct(product.id, { isActive: nextStatus });
+      await productService.updateProduct(statusTarget.id, { isActive: nextStatus });
       await fetchProducts();
+      setStatusTarget(null);
     } catch (e) {
-      alert(e.response?.data?.message || 'Không thể cập nhật trạng thái sản phẩm.');
+      setStatusError(e.response?.data?.message || 'Không thể cập nhật trạng thái sản phẩm.');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -154,16 +186,15 @@ export default function AdminProductsPage() {
         marginBottom: '16px',
         flexWrap: 'wrap',
       }}>
-        <form onSubmit={e => { e.preventDefault(); fetchProducts(); }} style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <input
             className="form-input"
             style={{ width: 260 }}
-            placeholder="Tìm sản phẩm..."
+            placeholder="Nhập tên để tìm sản phẩm..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <button type="submit" className="btn btn-primary btn-sm">Tìm</button>
-        </form>
+        </div>
 
         <select
           className="form-select"
@@ -244,6 +275,16 @@ export default function AdminProductsPage() {
                     onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
                     required
                   />
+                  {form.variants.length > 0 && (
+                    <div className={`stock-total-note${hasVariantStockMismatch ? ' warning' : ''}`}>
+                      Tổng tồn kho biến thể: <strong>{variantStockTotal}</strong>
+                      {hasVariantStockMismatch && (
+                        <span>
+                          Tồn kho tổng phải bằng tổng tồn kho của các biến thể.
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -256,8 +297,8 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <div className="form-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem' }}>
+              <div className="form-group admin-product-visibility">
+                <label>
                   <input
                     type="checkbox"
                     checked={form.isActive}
@@ -329,12 +370,60 @@ export default function AdminProductsPage() {
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving || hasVariantStockMismatch}
+                >
                   {saving ? <span className="spinner" /> : 'Lưu'}
                 </button>
                 <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Hủy</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {statusTarget && (
+        <div className="admin-modal-overlay" onClick={() => !updatingStatus && setStatusTarget(null)}>
+          <div className="admin-modal admin-confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal__header">
+              <h3>{statusTarget.isActive ? 'Ẩn sản phẩm' : 'Hiển thị lại sản phẩm'}</h3>
+              <button
+                type="button"
+                onClick={() => setStatusTarget(null)}
+                disabled={updatingStatus}
+                aria-label="Đóng"
+              >
+                ×
+              </button>
+            </div>
+            <p className="admin-confirm-modal__message">
+              {statusTarget.isActive
+                ? `Bạn có chắc muốn ẩn “${statusTarget.name}” khỏi website?`
+                : `Bạn có chắc muốn hiển thị lại “${statusTarget.name}” trên website?`}
+            </p>
+            {statusError && <div className="alert alert-error">{statusError}</div>}
+            <div className="admin-confirm-modal__actions">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setStatusTarget(null)}
+                disabled={updatingStatus}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleConfirmStatus}
+                disabled={updatingStatus}
+              >
+                {updatingStatus
+                  ? <span className="spinner" />
+                  : statusTarget.isActive ? 'Ẩn sản phẩm' : 'Hiển thị lại'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -351,7 +440,6 @@ export default function AdminProductsPage() {
                 <th>Danh mục</th>
                 <th>Giá</th>
                 <th>Tồn kho</th>
-                <th>Biến thể</th>
                 <th>Trạng thái</th>
                 <th>Hành động</th>
               </tr>
@@ -363,7 +451,13 @@ export default function AdminProductsPage() {
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      style={{ width: 48, height: 60, objectFit: 'cover', background: 'var(--warm-gray)' }}
+                      style={{
+                        width: 48,
+                        height: 60,
+                        objectFit: 'cover',
+                        background: 'var(--warm-gray)',
+                        borderRadius: 6,
+                      }}
                       onError={e => { e.currentTarget.style.display = 'none'; }}
                     />
                   </td>
@@ -373,14 +467,10 @@ export default function AdminProductsPage() {
                   <td>
                     <span style={{ color: product.stock < 5 ? 'var(--red)' : 'inherit' }}>{product.stock}</span>
                   </td>
-                  <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', maxWidth: 180 }}>
-                    {product.variants?.length
-                      ? product.variants.map(v => `${v.size}/${v.color}: ${v.stock}`).join(', ')
-                      : 'Không có'}
-                  </td>
                   <td>
-                    <span className={`badge ${product.isActive ? 'badge-dark' : 'badge-light'}`}>
-                      {product.isActive ? 'Hiển thị' : 'Đã ẩn'}
+                    <span className={`admin-product-status ${product.isActive ? 'active' : 'hidden'}`}>
+                      <span className="admin-product-status__dot" />
+                      {product.isActive ? 'Đang hiển thị' : 'Đã ẩn'}
                     </span>
                   </td>
                   <td>
@@ -392,7 +482,10 @@ export default function AdminProductsPage() {
                           border: `1px solid ${product.isActive ? 'var(--red)' : 'var(--black)'}`,
                           color: product.isActive ? 'var(--red)' : 'var(--black)',
                         }}
-                        onClick={() => handleToggleStatus(product)}
+                        onClick={() => {
+                          setStatusError('');
+                          setStatusTarget(product);
+                        }}
                       >
                         {product.isActive ? 'Ẩn' : 'Hiện'}
                       </button>

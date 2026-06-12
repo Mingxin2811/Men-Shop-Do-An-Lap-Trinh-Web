@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../services/product.service';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatProductColor, normalizeProductColor } from '../utils/productOptions';
 import './ProductDetailPage.css';
 
 const formatPrice = (p) =>
@@ -29,8 +30,19 @@ export default function ProductDetailPage() {
     setLoading(true);
     productService.getProduct(id)
       .then(res => {
-        const p = res.data.data;
+        const source = res.data.data;
+        const p = {
+          ...source,
+          variants: source.variants?.map(variant => ({
+            ...variant,
+            color: normalizeProductColor(variant.color),
+          })) || [],
+        };
         setProduct(p);
+        setSelectedSize('');
+        setSelectedColor('');
+        setSelectedVariant(null);
+        setQuantity(1);
         // get related
         productService.getProducts({ category: p.category?.slug, limit: 4 })
           .then(r => setRelatedProducts(r.data.data.products.filter(x => x.id !== id)));
@@ -146,7 +158,7 @@ export default function ProductDetailPage() {
                     className={`pdp-color-btn${selectedColor === c ? ' active' : ''}`}
                     onClick={() => setSelectedColor(c)}
                   >
-                    {c}
+                    {formatProductColor(c)}
                   </button>
                 ))}
               </div>

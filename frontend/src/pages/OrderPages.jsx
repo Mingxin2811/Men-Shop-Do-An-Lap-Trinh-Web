@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { orderService } from '../services/order.service';
+import { formatProductColor } from '../utils/productOptions';
 import './OrderPages.css';
 
 const formatPrice = (p) =>
@@ -141,8 +142,8 @@ export function OrderDetailPage() {
           <div className="card mb-lg">
             <h4 style={{ marginBottom: '16px' }}>Thông tin giao hàng</h4>
             <p><strong>{order.shippingName}</strong></p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{order.shippingPhone}</p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{order.shippingAddress}</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>{order.shippingPhone}</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>{order.shippingAddress}</p>
           </div>
 
           {/* Items */}
@@ -152,7 +153,11 @@ export function OrderDetailPage() {
               <div key={item.id} className="order-item">
                 <div>
                   <p className="order-item__name">{item.productName}</p>
-                  {item.size && <p className="order-item__variant">{item.size} · {item.color}</p>}
+                  {item.size && (
+                    <p className="order-item__variant">
+                      {item.size} · {formatProductColor(item.color)}
+                    </p>
+                  )}
                 </div>
                 <div className="order-item__right">
                   <span>×{item.quantity}</span>

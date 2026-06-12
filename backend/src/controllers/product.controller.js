@@ -10,6 +10,14 @@ const normalizeVariants = (variants = []) => {
   }));
 };
 
+const getVariantStockTotal = (variants = []) =>
+  normalizeVariants(variants).reduce((total, variant) => total + variant.stock, 0);
+
+const hasInvalidVariantStockTotal = (stock, variants) =>
+  Array.isArray(variants) &&
+  variants.length > 0 &&
+  Number(stock) !== getVariantStockTotal(variants);
+
 const getProducts = async (req, res, next) => {
   try {
     const {
@@ -164,6 +172,14 @@ const createProduct = async (req, res, next) => {
       return errorResponse(res, "San pham da ton tai", 409);
     }
 
+    if (hasInvalidVariantStockTotal(stock, variants)) {
+      return errorResponse(
+        res,
+        "Tồn kho tổng phải bằng tổng tồn kho của các biến thể",
+        400
+      );
+    }
+
     const product = await prisma.product.create({
       data: {
         categoryId,
@@ -195,6 +211,20 @@ const updateProduct = async (req, res, next) => {
     const existingProduct = await prisma.product.findUnique({ where: { id } });
     if (!existingProduct) {
       return errorResponse(res, "Khong tim thay san pham", 404);
+    }
+
+    if (
+      variants !== undefined &&
+      hasInvalidVariantStockTotal(
+        stock !== undefined ? stock : existingProduct.stock,
+        variants
+      )
+    ) {
+      return errorResponse(
+        res,
+        "Tồn kho tổng phải bằng tổng tồn kho của các biến thể",
+        400
+      );
     }
 
     const dataToUpdate = {};

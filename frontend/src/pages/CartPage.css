@@ -14,8 +14,8 @@
 
 .cart-empty h2 {
   font-family: var(--font-display);
-  font-size: 2rem;
-  font-weight: 400;
+  font-size: 34px;
+  font-weight: 500;
 }
 
 .cart-empty p {
@@ -89,6 +89,7 @@
   object-fit: cover;
   background: var(--warm-gray);
   flex-shrink: 0;
+  border-radius: 6px;
 }
 
 .cart-item__info {
@@ -108,7 +109,7 @@
 .cart-item__name {
   font-family: var(--font-display);
   font-size: 1.1rem;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--black);
   text-decoration: none;
   transition: opacity 0.2s;
@@ -122,7 +123,8 @@
 }
 
 .cart-item__price {
-  font-size: 0.875rem;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -188,7 +190,7 @@
 .cart-summary__row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
+  font-size: 16px;
   color: var(--text-secondary);
 }
 

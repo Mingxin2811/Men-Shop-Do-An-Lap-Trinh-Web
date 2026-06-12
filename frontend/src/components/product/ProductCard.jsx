@@ -18,6 +18,10 @@ export default function ProductCard({ product }) {
   const handleQuickAdd = async (e) => {
     e.preventDefault();
     if (!user) { navigate('/login'); return; }
+    if (product.variants?.length > 0) {
+      navigate(`/products/${product.id}`);
+      return;
+    }
     try {
       setAdding(true);
       await addToCart(product.id, 1, null);
@@ -45,7 +49,9 @@ export default function ProductCard({ product }) {
             onClick={handleQuickAdd}
             disabled={adding}
           >
-            {adding ? '...' : added ? 'Đã thêm ✓' : 'Thêm vào giỏ'}
+            {product.variants?.length > 0
+              ? 'Chọn size và màu'
+              : adding ? '...' : added ? 'Đã thêm ✓' : 'Thêm vào giỏ'}
           </button>
         </div>
         {product.stock < 5 && product.stock > 0 && (

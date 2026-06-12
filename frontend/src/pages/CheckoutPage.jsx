@@ -4,6 +4,7 @@ import { orderService } from '../services/order.service';
 import { paymentService } from '../services/payment.service';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { formatProductColor } from '../utils/productOptions';
 import './CheckoutPage.css';
 
 const formatPrice = (p) =>
@@ -158,7 +159,9 @@ export default function CheckoutPage() {
                 <div className="checkout-item__info">
                   <p>{item.product?.name}</p>
                   {item.variant && (
-                    <p className="checkout-item__variant">{item.variant.size} · {item.variant.color}</p>
+                    <p className="checkout-item__variant">
+                      {item.variant.size} · {formatProductColor(item.variant.color)}
+                    </p>
                   )}
                   <p className="checkout-item__qty">× {item.quantity}</p>
                 </div>

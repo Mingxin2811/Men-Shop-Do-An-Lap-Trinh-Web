@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { formatProductColor } from '../utils/productOptions';
 import './CartPage.css';
 
 const formatPrice = (p) =>
@@ -61,7 +62,7 @@ export default function CartPage() {
                   </Link>
                   {item.variant && (
                     <p className="cart-item__variant">
-                      {item.variant.size} · {item.variant.color}
+                      {item.variant.size} · {formatProductColor(item.variant.color)}
                     </p>
                   )}
                   <p className="cart-item__price">{formatPrice(item.product?.price)}</p>

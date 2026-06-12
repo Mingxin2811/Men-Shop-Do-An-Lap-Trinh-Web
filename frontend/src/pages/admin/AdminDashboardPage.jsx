@@ -77,9 +77,9 @@ export default function AdminDashboardPage() {
                     #{order.id.slice(-8).toUpperCase()}
                   </Link>
                 </td>
-                <td style={{ fontSize: '0.875rem' }}>{order.user?.name}</td>
+                <td style={{ fontSize: '16px' }}>{order.user?.name}</td>
                 <td style={{ fontSize: '0.8rem', color: 'var(--mid-gray)' }}>{formatDate(order.createdAt)}</td>
-                <td style={{ fontSize: '0.875rem', fontWeight: 500 }}>{formatPrice(order.totalAmount)}</td>
+                <td style={{ fontSize: '16px', fontWeight: 600 }}>{formatPrice(order.totalAmount)}</td>
                 <td>
                   <span style={{
                     display: 'inline-block',

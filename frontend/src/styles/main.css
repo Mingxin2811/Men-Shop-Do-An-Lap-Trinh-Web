@@ -49,15 +49,17 @@ body {
   background: var(--white);
   color: var(--black);
   line-height: 1.6;
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.01em;
   overflow-x: hidden;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* ── Typography ─────────────────────────── */
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.01em;
 }
@@ -90,7 +92,8 @@ button {
 
 input, textarea, select {
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 /* ── Layout ─────────────────────────────── */
@@ -113,8 +116,8 @@ input, textarea, select {
   justify-content: center;
   gap: var(--spacing-sm);
   padding: 14px 32px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   transition: var(--transition);
@@ -157,12 +160,12 @@ input, textarea, select {
 
 .btn-sm {
   padding: 10px 20px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .btn-lg {
   padding: 18px 48px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .btn:disabled {
@@ -177,8 +180,8 @@ input, textarea, select {
 
 .form-label {
   display: block;
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -190,8 +193,8 @@ input, textarea, select {
   padding: 12px 16px;
   border: 1px solid var(--border);
   background: var(--white);
-  font-size: 0.875rem;
-  font-weight: 300;
+  font-size: 16px;
+  font-weight: 400;
   color: var(--black);
   transition: var(--transition);
   outline: none;
@@ -217,7 +220,8 @@ input, textarea, select {
   padding: 12px 16px;
   border: 1px solid var(--border);
   background: var(--white);
-  font-size: 0.875rem;
+  font-size: 16px;
+  font-weight: 400;
   color: var(--black);
   outline: none;
   cursor: pointer;
@@ -256,8 +260,8 @@ input, textarea, select {
 }
 
 .table th {
-  font-size: 0.65rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -269,7 +273,7 @@ input, textarea, select {
 .table td {
   padding: 14px 16px;
   border-bottom: 1px solid var(--warm-gray);
-  font-size: 0.875rem;
+  font-size: 16px;
   vertical-align: middle;
 }
 
@@ -288,7 +292,8 @@ input, textarea, select {
 /* ── Alert / Toast ──────────────────────── */
 .alert {
   padding: 12px 20px;
-  font-size: 0.875rem;
+  font-size: 16px;
+  font-weight: 500;
   border-radius: var(--radius-sm);
   margin-bottom: var(--spacing-md);
   display: flex;
@@ -411,7 +416,7 @@ input, textarea, select {
 .mb-md { margin-bottom: var(--spacing-md); }
 .mb-lg { margin-bottom: var(--spacing-lg); }
 .text-secondary { color: var(--text-secondary); }
-.text-sm { font-size: 0.875rem; }
+.text-sm { font-size: 16px; }
 .text-xs { font-size: 0.75rem; }
 .font-medium { font-weight: 500; }
 .uppercase { text-transform: uppercase; letter-spacing: 0.08em; }

@@ -28,7 +28,10 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-banner">
-        <img src="https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=900&auto=format" alt="Fashion" />
+        <img
+          src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1000&auto=format"
+          alt="Thời trang nam công sở"
+        />
         <div className="auth-banner__overlay">
           <div className="auth-banner__text">
             <h2>Phong cách<br />bắt đầu từ đây</h2>
@@ -118,7 +121,10 @@ export function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-banner">
-        <img src="https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=900&auto=format" alt="Fashion" />
+        <img
+          src="https://images.unsplash.com/photo-1610652492500-ded49ceeb378?w=1000&auto=format"
+          alt="Phong cách thời trang nam hiện đại"
+        />
         <div className="auth-banner__overlay">
           <div className="auth-banner__text">
             <h2>Gia nhập<br />cộng đồng</h2>

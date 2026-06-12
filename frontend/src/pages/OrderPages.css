@@ -35,7 +35,7 @@
 
 .order-card__id {
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 16px;
   letter-spacing: 0.05em;
 }
 
@@ -114,8 +114,8 @@
 }
 
 .info-value {
-  font-size: 0.875rem;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .order-item {
@@ -127,8 +127,8 @@
 }
 
 .order-item__name {
-  font-size: 0.875rem;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .order-item__variant {
@@ -140,7 +140,7 @@
 .order-item__right {
   display: flex;
   gap: var(--spacing-lg);
-  font-size: 0.875rem;
+  font-size: 16px;
   color: var(--text-secondary);
   flex-shrink: 0;
 }

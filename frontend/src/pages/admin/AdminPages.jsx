@@ -168,7 +168,7 @@ export function AdminOrdersPage() {
                 <tr key={o.id}>
                   <td style={{ fontWeight: 500, fontSize: '0.8rem' }}>#{o.id.slice(-8).toUpperCase()}</td>
                   <td>
-                    <p style={{ fontSize: '0.875rem' }}>{o.user?.name}</p>
+                    <p style={{ fontSize: '16px' }}>{o.user?.name}</p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--mid-gray)' }}>{o.user?.email}</p>
                   </td>
                   <td style={{ fontSize: '0.8rem', color: 'var(--mid-gray)' }}>{formatDate(o.createdAt)}</td>
@@ -253,7 +253,7 @@ export function AdminUsersPage() {
               {users.map(u => (
                 <tr key={u.id}>
                   <td style={{ fontWeight: 500 }}>{u.name}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{u.email}</td>
+                  <td style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>{u.email}</td>
                   <td style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>{u.phone || '—'}</td>
                   <td style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>{formatDate(u.createdAt)}</td>
                   <td>

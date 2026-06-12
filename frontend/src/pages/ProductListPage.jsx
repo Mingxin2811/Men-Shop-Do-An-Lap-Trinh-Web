@@ -6,11 +6,11 @@ import './ProductListPage.css';
 
 const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL'];
 const COLOR_OPTIONS = [
-  { label: 'Đen', value: 'Den' },
-  { label: 'Trắng', value: 'Trang' },
-  { label: 'Xám', value: 'Xam' },
-  { label: 'Xanh navy', value: 'Navy' },
-  { label: 'Nâu', value: 'Nau' },
+  { label: 'Đen', value: 'Đen' },
+  { label: 'Trắng', value: 'Trắng' },
+  { label: 'Xám', value: 'Xám' },
+  { label: 'Xanh navy', value: 'Xanh navy' },
+  { label: 'Nâu', value: 'Nâu' },
   { label: 'Be', value: 'Be' },
 ];
 
