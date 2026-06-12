@@ -1,5 +1,7 @@
 const prisma = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
+const { getEffectivePrice } = require("../utils/price");
+const { sendMail, buildOrderConfirmationEmail } = require("../utils/mailer");
 
 const createOrder = async (req, res, next) => {
   try {
@@ -26,7 +28,7 @@ const createOrder = async (req, res, next) => {
         return errorResponse(res, `San pham ${item.product.name} da bi an`, 400);
       }
 
-      totalAmount += Number(item.product.price) * item.quantity;
+      totalAmount += getEffectivePrice(item.product) * item.quantity;
 
       const availableStock = item.variant ? item.variant.stock : item.product.stock;
       if (availableStock < item.quantity) {
@@ -55,7 +57,7 @@ const createOrder = async (req, res, next) => {
             productId: item.productId,
             variantId: item.variantId,
             productName: item.product.name,
-            price: item.product.price,
+            price: getEffectivePrice(item.product),
             quantity: item.quantity,
             size: item.variant?.size || null,
             color: item.variant?.color || null
@@ -82,6 +84,14 @@ const createOrder = async (req, res, next) => {
         include: { items: true }
       });
     });
+
+    // Gui email xac nhan don hang (khong chan luong dat hang neu loi).
+    try {
+      const { subject, text, html } = buildOrderConfirmationEmail(order, req.user);
+      await sendMail({ to: req.user.email, subject, text, html });
+    } catch (mailError) {
+      console.error("Gui email xac nhan don hang that bai:", mailError.message);
+    }
 
     return successResponse(res, "Dat hang thanh cong", order, 201);
   } catch (error) {
@@ -192,10 +202,67 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+const cancelMyOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true }
+    });
+
+    if (!order) {
+      return errorResponse(res, "Khong tim thay don hang", 404);
+    }
+
+    if (order.userId !== userId) {
+      return errorResponse(res, "Ban khong co quyen huy don hang nay", 403);
+    }
+
+    // Khách chỉ được tự huỷ khi đơn còn chờ xử lý.
+    if (order.status !== "PENDING") {
+      return errorResponse(res, "Chi co the huy don hang dang cho xu ly", 400);
+    }
+
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // Hoàn lại tồn kho đã trừ khi đặt hàng.
+      for (const item of order.items) {
+        if (item.variantId) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { increment: item.quantity } }
+          });
+        } else {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } }
+          });
+        }
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: {
+          status: "CANCELLED",
+          // Đơn đã thanh toán thì chuyển sang hoàn tiền, còn lại giữ nguyên trạng thái.
+          ...(order.paymentStatus === "PAID" ? { paymentStatus: "REFUNDED" } : {})
+        },
+        include: { items: true, payment: true }
+      });
+    });
+
+    return successResponse(res, "Huy don hang thanh cong", updatedOrder);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
   getOrderById,
   getAllOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  cancelMyOrder
 };

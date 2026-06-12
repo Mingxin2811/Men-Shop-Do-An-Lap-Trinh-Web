@@ -1,0 +1,7 @@
+# Override trien khai that: KHONG chay seed (database trong, tu nhap du lieu that).
+# Project nay dung volume rieng nen database bat dau trong; du lieu cu (project cu)
+# van duoc giu nguyen o volume cu.
+# Chay: docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d --build
+services:
+  backend:
+    command: sh -c "npx prisma migrate deploy && npm start"

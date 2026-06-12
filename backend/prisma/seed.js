@@ -15,27 +15,35 @@ const categories = [
   { name: "Phụ kiện", description: "Phụ kiện thời trang nam cần thiết." }
 ];
 
+// Cau truc: [ten, mo ta, gia, danh muc, anh, giaKhuyenMai?]
 const products = [
   ["Áo thun basic cotton", "Áo thun cotton form regular, mềm và thoáng.", 199000, "Áo thun", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900"],
-  ["Áo thun oversized", "Áo thun oversized phong cách streetwear.", 249000, "Áo thun", "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=900"],
+  ["Áo thun oversized", "Áo thun oversized phong cách streetwear.", 249000, "Áo thun", "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=900", 199000],
   ["Áo thun premium modal", "Áo thun modal mềm mịn, ít nhăn và thoáng khi mặc hằng ngày.", 289000, "Áo thun", "https://images.unsplash.com/photo-1583743814966-8936f37f4678?w=900"],
-  ["Áo polo pique", "Áo polo vải pique đứng form, phù hợp đi làm và đi chơi.", 329000, "Áo thun", "https://images.unsplash.com/photo-1622470953794-aa9c70b0fb9d?w=900"],
+  ["Áo polo pique", "Áo polo vải pique đứng form, phù hợp đi làm và đi chơi.", 329000, "Áo thun", "https://images.unsplash.com/photo-1622470953794-aa9c70b0fb9d?w=900", 279000],
   ["Áo sơ mi oxford", "Sơ mi oxford dày dặn, phù hợp công sở.", 399000, "Áo sơ mi", "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900"],
   ["Áo sơ mi linen", "Sơ mi linen nhẹ, thoáng mát cho mùa hè.", 429000, "Áo sơ mi", "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=900"],
   ["Áo sơ mi kẻ caro", "Sơ mi caro trẻ trung, dễ mặc riêng hoặc khoác ngoài áo thun.", 389000, "Áo sơ mi", "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=900"],
   ["Áo sơ mi denim", "Sơ mi denim nam chất vải bền, phong cách casual mạnh mẽ.", 459000, "Áo sơ mi", "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900"],
-  ["Áo khoác bomber", "Bomber jacket trẻ trung, giữ ấm vừa phải.", 699000, "Áo khoác", "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900"],
+  ["Áo khoác bomber", "Bomber jacket trẻ trung, giữ ấm vừa phải.", 699000, "Áo khoác", "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900", 549000],
   ["Áo khoác denim", "Áo khoác denim nam phong cách, bền bỉ.", 749000, "Áo khoác", "https://images.unsplash.com/photo-1543076447-215ad9ba6923?w=900"],
   ["Áo khoác dù gió", "Áo khoác dù gió nhẹ, chắn gió và dễ gấp gọn khi di chuyển.", 599000, "Áo khoác", "https://images.unsplash.com/photo-1520975916090-3105956dac38?w=900"],
-  ["Quần jeans slim fit", "Quần jeans slim fit tôn dáng, dễ phối giày.", 549000, "Quần jeans", "https://images.unsplash.com/photo-1542272604-787c3835535d?w=900"],
+  ["Quần jeans slim fit", "Quần jeans slim fit tôn dáng, dễ phối giày.", 549000, "Quần jeans", "https://images.unsplash.com/photo-1542272604-787c3835535d?w=900", 449000],
   ["Quần jeans straight fit", "Quần jeans ống đứng cổ điển, thoải mái.", 579000, "Quần jeans", "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=900"],
   ["Quần jeans relaxed fit", "Quần jeans relaxed fit rộng vừa, thoải mái cho ngày năng động.", 599000, "Quần jeans", "https://images.unsplash.com/photo-1511196044526-5cb3bcb7071b?w=900"],
   ["Quần tây công sở", "Quần tây nam lịch sự, chất vải đứng form.", 499000, "Quần tây", "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900"],
   ["Quần chinos nam", "Quần chinos linh hoạt cho công sở và cuối tuần.", 459000, "Quần tây", "https://images.unsplash.com/photo-1517438476312-10d79c077509?w=900"],
   ["Quần short kaki", "Quần short kaki gọn gàng, phù hợp đi chơi và du lịch.", 359000, "Quần tây", "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=900"],
   ["Thắt lưng da nam", "Thắt lưng da tông màu đen cổ điển.", 299000, "Phụ kiện", "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=900"],
-  ["Ví da nam", "Ví da nam nhỏ gọn, nhiều ngăn tiện lợi.", 349000, "Phụ kiện", "https://images.unsplash.com/photo-1627123424574-724758594e93?w=900"],
+  ["Ví da nam", "Ví da nam nhỏ gọn, nhiều ngăn tiện lợi.", 349000, "Phụ kiện", "https://images.unsplash.com/photo-1627123424574-724758594e93?w=900", 279000],
   ["Nón baseball basic", "Nón baseball basic dễ phối với áo thun, jeans và sneaker.", 189000, "Phụ kiện", "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=900"]
+];
+
+// Anh chi tiet dung chung cho gallery (demo nhieu anh san pham).
+const galleryExtras = [
+  "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=900",
+  "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=900",
+  "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=900"
 ];
 
 const variantSets = ["S", "M", "L"].flatMap((size, sizeIndex) =>
@@ -58,7 +66,7 @@ async function main() {
   const adminPassword = await bcrypt.hash("Admin123456", 10);
   const customerPassword = await bcrypt.hash("Customer123456", 10);
 
-  await prisma.user.upsert({
+  const adminUser = await prisma.user.upsert({
     where: { email: "admin@menshop.com" },
     update: {},
     create: {
@@ -69,7 +77,7 @@ async function main() {
     }
   });
 
-  await prisma.user.upsert({
+  const customerUser = await prisma.user.upsert({
     where: { email: "customer@menshop.com" },
     update: {},
     create: {
@@ -96,8 +104,9 @@ async function main() {
     categoryMap.set(category.name, savedCategory);
   }
 
-  for (const [name, description, price, categoryName, imageUrl] of products) {
+  for (const [name, description, price, categoryName, imageUrl, salePrice] of products) {
     const category = categoryMap.get(categoryName);
+    const normalizedSalePrice = salePrice ?? null;
 
     const product = await prisma.product.upsert({
       where: { slug: slugify(name) },
@@ -105,6 +114,7 @@ async function main() {
         name,
         description,
         price,
+        salePrice: normalizedSalePrice,
         imageUrl,
         stock: totalVariantStock,
         categoryId: category.id
@@ -114,6 +124,7 @@ async function main() {
         slug: slugify(name),
         description,
         price,
+        salePrice: normalizedSalePrice,
         imageUrl,
         stock: totalVariantStock,
         categoryId: category.id
@@ -158,6 +169,74 @@ async function main() {
         }
       });
     }
+
+    // Dat lai gallery anh phu (idempotent): xoa cu, tao moi 2 anh chi tiet.
+    await prisma.productImage.deleteMany({ where: { productId: product.id } });
+    await prisma.productImage.createMany({
+      data: galleryExtras.slice(0, 2).map((url, index) => ({
+        productId: product.id,
+        url,
+        position: index
+      }))
+    });
+  }
+
+  // Danh gia demo cho vai san pham dau tien.
+  const reviewSamples = [
+    { rating: 5, comment: "Chat vai dep, form chuan, rat hai long!" },
+    { rating: 4, comment: "San pham tot so voi gia tien, giao hang nhanh." },
+    { rating: 5, comment: "Mac len rat hop, se ung ho shop tiep." },
+    { rating: 3, comment: "Tam on, mau hoi khac so voi anh mot chut." }
+  ];
+  const someProducts = await prisma.product.findMany({ take: 6, orderBy: { createdAt: "asc" } });
+  for (let i = 0; i < someProducts.length; i++) {
+    const product = someProducts[i];
+    const r1 = reviewSamples[i % reviewSamples.length];
+    await prisma.review.upsert({
+      where: { productId_userId: { productId: product.id, userId: customerUser.id } },
+      update: { rating: r1.rating, comment: r1.comment },
+      create: { productId: product.id, userId: customerUser.id, rating: r1.rating, comment: r1.comment }
+    });
+    if (i % 2 === 0) {
+      const r2 = reviewSamples[(i + 1) % reviewSamples.length];
+      await prisma.review.upsert({
+        where: { productId_userId: { productId: product.id, userId: adminUser.id } },
+        update: { rating: r2.rating, comment: r2.comment },
+        create: { productId: product.id, userId: adminUser.id, rating: r2.rating, comment: r2.comment }
+      });
+    }
+  }
+
+  // Bai viet blog demo.
+  const posts = [
+    {
+      title: "5 cach phoi do nam thanh lich cho mua he",
+      excerpt: "Goi y cac cong thuc phoi do nam vua mat me vua lich su cho nhung ngay he.",
+      coverImage: "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=1200",
+      content:
+        "Mua he la luc de the hien phong cach ca tinh ma van thoai mai. Hay uu tien chat lieu cotton, linen thoang khi.\n\n1. Ao thun trang + quan short kaki.\n2. So mi linen + quan chinos.\n3. Polo + quan jeans lung.\n4. Ao thun hoa tiet + quan tay sang mau.\n5. Phu kien: non, kinh ram, giay sneaker trang.\n\nNguyen tac chung la giu mau sac hai hoa va form vua van."
+    },
+    {
+      title: "Huong dan chon size quan ao nam chuan nhat",
+      excerpt: "Lam sao de chon dung size khi mua sam online? Bai viet nay se giup ban.",
+      coverImage: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200",
+      content:
+        "Chon dung size giup trang phuc ton dang va thoai mai hon.\n\n- Do vong nguc, vong eo va so sanh voi bang size cua shop.\n- Neu o giua hai size, uu tien size lon hon de de chiu.\n- Voi ao so mi, chu y vong co va do rong vai.\n\nMen's Shop luon cung cap bang size chi tiet o moi san pham."
+    },
+    {
+      title: "Xu huong thoi trang nam noi bat nam nay",
+      excerpt: "Diem qua nhung xu huong thoi trang nam dang duoc ua chuong.",
+      coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200",
+      content:
+        "Nam nay, phong cach toi gian (minimal) va tone mau trung tinh len ngoi.\n\nCac mon do oversized, chat lieu ben vung va thiet ke da nang duoc ua chuong. Phu kien da that don gian nhung tinh te."
+    }
+  ];
+  for (const post of posts) {
+    await prisma.post.upsert({
+      where: { slug: slugify(post.title) },
+      update: { ...post, slug: slugify(post.title) },
+      create: { ...post, slug: slugify(post.title) }
+    });
   }
 }
 

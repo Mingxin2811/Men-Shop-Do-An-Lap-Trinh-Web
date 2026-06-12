@@ -40,6 +40,61 @@
   font-weight: 400;
 }
 
+.footer__newsletter {
+  margin-top: var(--spacing-lg);
+}
+
+.footer__newsletter label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: var(--spacing-sm);
+}
+
+.footer__newsletter-row {
+  display: flex;
+  align-items: center;
+  max-width: 320px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s;
+}
+
+.footer__newsletter-row:focus-within {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.footer__newsletter-row input {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 11px 14px;
+  font-size: 0.85rem;
+  color: var(--white);
+}
+
+.footer__newsletter-row input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.footer__newsletter-row input:focus {
+  outline: none;
+}
+
+.footer__newsletter-row button {
+  padding: 0 16px;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: none;
+  transition: color 0.2s;
+}
+
+.footer__newsletter-row button:hover {
+  color: var(--white);
+}
+
 .footer__col h6 {
   font-size: 0.65rem;
   letter-spacing: 0.15em;

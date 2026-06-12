@@ -13,7 +13,9 @@ function defaultForm(product) {
     name: product.name || '',
     description: product.description || '',
     price: product.price || '',
+    salePrice: product.salePrice ?? '',
     imageUrl: product.imageUrl || '',
+    images: product.images?.map(img => img.url) || [],
     stock: product.stock ?? '',
     isActive: Boolean(product.isActive),
     variants: product.variants?.length
@@ -28,7 +30,9 @@ function defaultForm(product) {
     name: '',
     description: '',
     price: '',
+    salePrice: '',
     imageUrl: '',
+    images: [],
     stock: '',
     isActive: true,
     variants: [],
@@ -125,6 +129,8 @@ export default function AdminProductsPage() {
   const buildPayload = () => ({
     ...form,
     price: parseFloat(form.price),
+    salePrice: form.salePrice === '' || form.salePrice == null ? null : parseFloat(form.salePrice),
+    images: (form.images || []).map(u => (u || '').trim()).filter(Boolean),
     stock: parseInt(form.stock, 10),
     isActive: Boolean(form.isActive),
     variants: form.variants
@@ -289,12 +295,73 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">URL ảnh</label>
+                <label className="form-label">Giá khuyến mãi (VND)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={form.salePrice}
+                  min="0"
+                  placeholder="Để trống nếu không giảm giá"
+                  onChange={e => setForm(f => ({ ...f, salePrice: e.target.value }))}
+                />
+                {form.salePrice !== '' && form.price !== '' && parseFloat(form.salePrice) >= parseFloat(form.price) && (
+                  <div className="stock-total-note warning">
+                    <span>Giá khuyến mãi phải nhỏ hơn giá gốc.</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">URL ảnh chính</label>
                 <input
                   className="form-input"
                   value={form.imageUrl}
                   onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
                 />
+              </div>
+
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Ảnh phụ (gallery)</label>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setForm(f => ({ ...f, images: [...(f.images || []), ''] }))}
+                  >
+                    + Thêm ảnh
+                  </button>
+                </div>
+                {(form.images || []).length === 0 ? (
+                  <p style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>
+                    Chưa có ảnh phụ. Trang chi tiết sẽ chỉ hiện ảnh chính.
+                  </p>
+                ) : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {form.images.map((url, index) => (
+                      <div key={index} style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          className="form-input"
+                          placeholder="https://..."
+                          value={url}
+                          onChange={e => setForm(f => ({
+                            ...f,
+                            images: f.images.map((u, i) => (i === index ? e.target.value : u)),
+                          }))}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          onClick={() => setForm(f => ({
+                            ...f,
+                            images: f.images.filter((_, i) => i !== index),
+                          }))}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="form-group admin-product-visibility">
@@ -463,7 +530,19 @@ export default function AdminProductsPage() {
                   </td>
                   <td style={{ fontWeight: 500, maxWidth: 220 }}>{product.name}</td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{product.category?.name}</td>
-                  <td>{formatPrice(product.price)}</td>
+                  <td>
+                    {product.salePrice != null && Number(product.salePrice) < Number(product.price) ? (
+                      <>
+                        <span style={{ color: 'var(--red)', fontWeight: 500 }}>{formatPrice(product.salePrice)}</span>
+                        <br />
+                        <span style={{ color: 'var(--mid-gray)', textDecoration: 'line-through', fontSize: '0.8rem' }}>
+                          {formatPrice(product.price)}
+                        </span>
+                      </>
+                    ) : (
+                      formatPrice(product.price)
+                    )}
+                  </td>
                   <td>
                     <span style={{ color: product.stock < 5 ? 'var(--red)' : 'inherit' }}>{product.stock}</span>
                   </td>

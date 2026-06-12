@@ -4,7 +4,10 @@ const {
   register,
   login,
   getMe,
-  updateProfile
+  updateProfile,
+  changePassword,
+  forgotPassword,
+  resetPassword
 } = require("../controllers/auth.controller");
 const protect = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
@@ -169,6 +172,64 @@ router.put(
   ],
   validate,
   updateProfile
+);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   put:
+ *     summary: Doi mat khau cho user hien tai
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Doi mat khau thanh cong
+ *       400:
+ *         description: Mat khau hien tai khong dung
+ *       422:
+ *         description: Du lieu khong hop le
+ */
+router.put(
+  "/change-password",
+  protect,
+  [
+    body("currentPassword").notEmpty().withMessage("Mat khau hien tai la bat buoc"),
+    body("newPassword").isLength({ min: 8 }).withMessage("Mat khau moi phai co it nhat 8 ky tu")
+  ],
+  validate,
+  changePassword
+);
+
+router.post(
+  "/forgot-password",
+  [body("email").isEmail().withMessage("Email khong hop le")],
+  validate,
+  forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  [
+    body("token").notEmpty().withMessage("Thieu token"),
+    body("newPassword").isLength({ min: 8 }).withMessage("Mat khau moi phai co it nhat 8 ky tu")
+  ],
+  validate,
+  resetPassword
 );
 
 module.exports = router;

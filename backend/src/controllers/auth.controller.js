@@ -1,7 +1,11 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const prisma = require("../config/db");
 const generateToken = require("../utils/generateToken");
 const { successResponse, errorResponse } = require("../utils/response");
+const { sendMail, buildPasswordResetEmail } = require("../utils/mailer");
+
+const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
 
 const userSelect = {
   id: true,
@@ -107,9 +111,107 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return errorResponse(res, "Khong tim thay nguoi dung", 404);
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return errorResponse(res, "Mat khau hien tai khong dung", 400);
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return errorResponse(res, "Mat khau moi phai khac mat khau hien tai", 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    return successResponse(res, "Doi mat khau thanh cong");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const forgotPassword = async (req, res, next) => {
+  try {
+    const email = (req.body.email || "").toLowerCase().trim();
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    // Luon tra ve thanh cong de tranh lo email co ton tai hay khong.
+    if (user && user.isActive) {
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const resetToken = hashToken(rawToken);
+      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 gio
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { resetToken, resetTokenExpiry }
+      });
+
+      const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const resetUrl = `${clientUrl}/reset-password?token=${rawToken}`;
+      const { subject, text, html } = buildPasswordResetEmail(user, resetUrl);
+
+      try {
+        await sendMail({ to: user.email, subject, text, html });
+      } catch (mailError) {
+        console.error("Gui email dat lai mat khau that bai:", mailError.message);
+      }
+    }
+
+    return successResponse(
+      res,
+      "Neu email ton tai, lien ket dat lai mat khau da duoc gui"
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    const hashed = hashToken(token);
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: hashed,
+        resetTokenExpiry: { gt: new Date() }
+      }
+    });
+
+    if (!user) {
+      return errorResponse(res, "Lien ket khong hop le hoac da het han", 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
+    });
+
+    return successResponse(res, "Dat lai mat khau thanh cong");
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
-  updateProfile
+  updateProfile,
+  changePassword,
+  forgotPassword,
+  resetPassword
 };
