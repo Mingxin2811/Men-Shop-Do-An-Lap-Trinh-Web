@@ -152,3 +152,27 @@
   font-size: 1rem;
   font-weight: 500;
 }
+
+.order-cancel {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.order-cancel__note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.order-cancel__btn {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.order-cancel__btn:hover:not(:disabled) {
+  background: var(--red);
+  color: var(--white);
+}

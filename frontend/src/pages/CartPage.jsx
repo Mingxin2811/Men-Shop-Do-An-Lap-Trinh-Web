@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { formatProductColor } from '../utils/productOptions';
+import { getSaleInfo } from '../utils/price';
 import './CartPage.css';
 
 const formatPrice = (p) =>
@@ -65,7 +66,19 @@ export default function CartPage() {
                       {item.variant.size} · {formatProductColor(item.variant.color)}
                     </p>
                   )}
-                  <p className="cart-item__price">{formatPrice(item.product?.price)}</p>
+                  {(() => {
+                    const sale = getSaleInfo(item.product);
+                    return sale.onSale ? (
+                      <p className="cart-item__price">
+                        <span style={{ color: 'var(--red)' }}>{formatPrice(sale.effectivePrice)}</span>{' '}
+                        <span style={{ color: 'var(--mid-gray)', textDecoration: 'line-through', fontSize: '0.85em' }}>
+                          {formatPrice(sale.originalPrice)}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="cart-item__price">{formatPrice(sale.effectivePrice)}</p>
+                    );
+                  })()}
                 </div>
               </div>
 

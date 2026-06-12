@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useRecentlyViewed } from '../contexts/RecentlyViewedContext';
 import { formatProductColor, normalizeProductColor } from '../utils/productOptions';
+import { getSaleInfo } from '../utils/price';
 import WishlistButton from '../components/product/WishlistButton';
 import SizeGuideModal from '../components/product/SizeGuideModal';
 import RecentlyViewedSection from '../components/product/RecentlyViewedSection';
@@ -132,7 +133,18 @@ export default function ProductDetailPage() {
         <div className="pdp-info">
           <p className="pdp-category">{product.category?.name}</p>
           <h1 className="pdp-title">{product.name}</h1>
-          <p className="pdp-price">{formatPrice(product.price)}</p>
+          {(() => {
+            const sale = getSaleInfo(product);
+            return sale.onSale ? (
+              <div className="pdp-price-row">
+                <span className="pdp-price pdp-price--sale">{formatPrice(sale.effectivePrice)}</span>
+                <span className="pdp-price-old">{formatPrice(sale.originalPrice)}</span>
+                <span className="pdp-discount-badge">-{sale.discountPercent}%</span>
+              </div>
+            ) : (
+              <p className="pdp-price">{formatPrice(sale.effectivePrice)}</p>
+            );
+          })()}
 
           <div className="pdp-divider" />
 

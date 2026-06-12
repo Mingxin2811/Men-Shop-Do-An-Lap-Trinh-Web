@@ -18,6 +18,13 @@ const hasInvalidVariantStockTotal = (stock, variants) =>
   variants.length > 0 &&
   Number(stock) !== getVariantStockTotal(variants);
 
+// Chuẩn hoá giá khuyến mãi: trả về null nếu trống, hoặc số đã làm tròn.
+const parseSalePrice = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
 const getProducts = async (req, res, next) => {
   try {
     const {
@@ -159,7 +166,7 @@ const getProductById = async (req, res, next) => {
 
 const createProduct = async (req, res, next) => {
   try {
-    const { categoryId, name, description, price, imageUrl, stock, variants, isActive } = req.body;
+    const { categoryId, name, description, price, salePrice, imageUrl, stock, variants, isActive } = req.body;
     const slug = slugify(name);
 
     const category = await prisma.category.findUnique({ where: { id: categoryId } });
@@ -180,6 +187,11 @@ const createProduct = async (req, res, next) => {
       );
     }
 
+    const normalizedSalePrice = parseSalePrice(salePrice);
+    if (normalizedSalePrice !== null && normalizedSalePrice >= Number(price)) {
+      return errorResponse(res, "Giá khuyến mãi phải nhỏ hơn giá gốc", 400);
+    }
+
     const product = await prisma.product.create({
       data: {
         categoryId,
@@ -187,6 +199,7 @@ const createProduct = async (req, res, next) => {
         slug,
         description: description || "",
         price: Number(price),
+        salePrice: normalizedSalePrice,
         imageUrl: imageUrl || "",
         stock: Number(stock),
         ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
@@ -206,7 +219,7 @@ const createProduct = async (req, res, next) => {
 const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { categoryId, name, description, price, imageUrl, stock, variants, isActive } = req.body;
+    const { categoryId, name, description, price, salePrice, imageUrl, stock, variants, isActive } = req.body;
 
     const existingProduct = await prisma.product.findUnique({ where: { id } });
     if (!existingProduct) {
@@ -258,6 +271,15 @@ const updateProduct = async (req, res, next) => {
     if (imageUrl !== undefined) dataToUpdate.imageUrl = imageUrl || "";
     if (stock !== undefined) dataToUpdate.stock = Number(stock);
     if (isActive !== undefined) dataToUpdate.isActive = Boolean(isActive);
+
+    if (salePrice !== undefined) {
+      const normalizedSalePrice = parseSalePrice(salePrice);
+      const effectivePrice = price !== undefined ? Number(price) : Number(existingProduct.price);
+      if (normalizedSalePrice !== null && normalizedSalePrice >= effectivePrice) {
+        return errorResponse(res, "Giá khuyến mãi phải nhỏ hơn giá gốc", 400);
+      }
+      dataToUpdate.salePrice = normalizedSalePrice;
+    }
 
     const product = await prisma.$transaction(async (tx) => {
       if (variants !== undefined) {

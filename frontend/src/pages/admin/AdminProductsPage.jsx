@@ -13,6 +13,7 @@ function defaultForm(product) {
     name: product.name || '',
     description: product.description || '',
     price: product.price || '',
+    salePrice: product.salePrice ?? '',
     imageUrl: product.imageUrl || '',
     stock: product.stock ?? '',
     isActive: Boolean(product.isActive),
@@ -28,6 +29,7 @@ function defaultForm(product) {
     name: '',
     description: '',
     price: '',
+    salePrice: '',
     imageUrl: '',
     stock: '',
     isActive: true,
@@ -125,6 +127,7 @@ export default function AdminProductsPage() {
   const buildPayload = () => ({
     ...form,
     price: parseFloat(form.price),
+    salePrice: form.salePrice === '' || form.salePrice == null ? null : parseFloat(form.salePrice),
     stock: parseInt(form.stock, 10),
     isActive: Boolean(form.isActive),
     variants: form.variants
@@ -286,6 +289,23 @@ export default function AdminProductsPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Giá khuyến mãi (VND)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={form.salePrice}
+                  min="0"
+                  placeholder="Để trống nếu không giảm giá"
+                  onChange={e => setForm(f => ({ ...f, salePrice: e.target.value }))}
+                />
+                {form.salePrice !== '' && form.price !== '' && parseFloat(form.salePrice) >= parseFloat(form.price) && (
+                  <div className="stock-total-note warning">
+                    <span>Giá khuyến mãi phải nhỏ hơn giá gốc.</span>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -463,7 +483,19 @@ export default function AdminProductsPage() {
                   </td>
                   <td style={{ fontWeight: 500, maxWidth: 220 }}>{product.name}</td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{product.category?.name}</td>
-                  <td>{formatPrice(product.price)}</td>
+                  <td>
+                    {product.salePrice != null && Number(product.salePrice) < Number(product.price) ? (
+                      <>
+                        <span style={{ color: 'var(--red)', fontWeight: 500 }}>{formatPrice(product.salePrice)}</span>
+                        <br />
+                        <span style={{ color: 'var(--mid-gray)', textDecoration: 'line-through', fontSize: '0.8rem' }}>
+                          {formatPrice(product.price)}
+                        </span>
+                      </>
+                    ) : (
+                      formatPrice(product.price)
+                    )}
+                  </td>
                   <td>
                     <span style={{ color: product.stock < 5 ? 'var(--red)' : 'inherit' }}>{product.stock}</span>
                   </td>

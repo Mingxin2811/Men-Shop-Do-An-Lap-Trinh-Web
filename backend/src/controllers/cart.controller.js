@@ -1,5 +1,6 @@
 const prisma = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
+const { getEffectivePrice } = require("../utils/price");
 
 const getCart = async (req, res, next) => {
   try {
@@ -15,7 +16,7 @@ const getCart = async (req, res, next) => {
 
     const items = cartItems.map((item) => ({
       ...item,
-      subtotal: Number(item.product.price) * item.quantity
+      subtotal: getEffectivePrice(item.product) * item.quantity
     }));
 
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);

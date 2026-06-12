@@ -5,10 +5,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import WishlistButton from './WishlistButton';
+import { formatPrice, getSaleInfo } from '../../utils/price';
 import './ProductCard.css';
-
-const formatPrice = (price) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
@@ -17,6 +15,7 @@ export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const sale = getSaleInfo(product);
 
   const handleQuickAdd = async (e) => {
     e.preventDefault();
@@ -61,18 +60,30 @@ export default function ProductCard({ product }) {
               : adding ? '...' : added ? 'Đã thêm ✓' : 'Thêm vào giỏ'}
           </button>
         </div>
-        {product.stock < 5 && product.stock > 0 && (
-          <span className="product-card__tag">Sắp hết</span>
-        )}
-        {product.stock === 0 && (
-          <span className="product-card__tag product-card__tag--sold">Hết hàng</span>
-        )}
+        <div className="product-card__tags">
+          {sale.onSale && (
+            <span className="product-card__tag product-card__tag--sale">-{sale.discountPercent}%</span>
+          )}
+          {product.stock < 5 && product.stock > 0 && (
+            <span className="product-card__tag">Sắp hết</span>
+          )}
+          {product.stock === 0 && (
+            <span className="product-card__tag product-card__tag--sold">Hết hàng</span>
+          )}
+        </div>
       </div>
 
       <div className="product-card__info">
         <p className="product-card__category">{product.category?.name}</p>
         <h3 className="product-card__name">{product.name}</h3>
-        <p className="product-card__price">{formatPrice(product.price)}</p>
+        {sale.onSale ? (
+          <p className="product-card__price">
+            <span className="product-card__price-sale">{formatPrice(sale.effectivePrice)}</span>
+            <span className="product-card__price-old">{formatPrice(sale.originalPrice)}</span>
+          </p>
+        ) : (
+          <p className="product-card__price">{formatPrice(sale.effectivePrice)}</p>
+        )}
       </div>
     </Link>
   );

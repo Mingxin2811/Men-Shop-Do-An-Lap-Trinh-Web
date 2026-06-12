@@ -6,6 +6,7 @@ export const orderService = {
   getOrder: (id) => api.get(`/orders/${id}`),
   getAllOrders: (params) => api.get('/orders', { params }),
   updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
+  cancelOrder: (id) => api.put(`/orders/${id}/cancel`),
 };
 
 export const adminService = {

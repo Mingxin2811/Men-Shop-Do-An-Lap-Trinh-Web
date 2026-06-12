@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { orderService } from '../services/order.service';
 import { formatProductColor } from '../utils/productOptions';
+import { useToast } from '../contexts/ToastContext';
 import './OrderPages.css';
 
 const formatPrice = (p) =>
@@ -84,15 +85,31 @@ export function OrderHistoryPage() {
 export function OrderDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const toast = useToast();
   const isSuccess = searchParams.get('success') === 'true';
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     orderService.getOrder(id)
       .then(res => setOrder(res.data.data))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleCancel = async () => {
+    if (!window.confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) return;
+    try {
+      setCancelling(true);
+      const res = await orderService.cancelOrder(id);
+      setOrder(res.data.data);
+      toast.success('Đã hủy đơn hàng');
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Không thể hủy đơn hàng');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) return <div className="loading-center"><div className="spinner spinner-lg" /></div>;
   if (!order) return <div className="container"><p>Không tìm thấy đơn hàng.</p></div>;
@@ -170,6 +187,16 @@ export function OrderDetailPage() {
               <span>{formatPrice(order.totalAmount)}</span>
             </div>
           </div>
+
+          {/* Hủy đơn khi còn chờ xử lý */}
+          {order.status === 'PENDING' && (
+            <div className="order-cancel">
+              <p className="order-cancel__note">Đơn hàng đang chờ xử lý — bạn có thể hủy ngay bây giờ.</p>
+              <button className="btn btn-outline order-cancel__btn" onClick={handleCancel} disabled={cancelling}>
+                {cancelling ? <span className="spinner" /> : 'Hủy đơn hàng'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
