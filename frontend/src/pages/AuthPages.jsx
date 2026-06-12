@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/auth.service';
+import loginImage from '../assets/login-old-money-banner.png';
+import registerImage from '../assets/register-old-money-banner.png';
 import './AuthPages.css';
 
-const loginImage = 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1000&auto=format';
-const registerImage = 'https://images.unsplash.com/photo-1610652492500-ded49ceeb378?w=1000&auto=format';
 const isStrongPassword = (password) =>
   password.length >= 8 &&
   /[A-Za-z]/.test(password) &&

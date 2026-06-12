@@ -16,6 +16,7 @@ const userSelect = {
   email: true,
   phone: true,
   address: true,
+  avatar: true,
   role: true,
   isActive: true,
   createdAt: true,
@@ -171,13 +172,14 @@ const getMe = async (req, res) =>
 
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, address } = req.body;
+    const { name, phone, address, avatar } = req.body;
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {
         ...(name !== undefined ? { name: name.trim() } : {}),
         ...(phone !== undefined ? { phone: phone?.trim() || null } : {}),
-        ...(address !== undefined ? { address: address || null } : {})
+        ...(address !== undefined ? { address: address || null } : {}),
+        ...(avatar !== undefined ? { avatar: avatar || null } : {})
       },
       select: userSelect
     });

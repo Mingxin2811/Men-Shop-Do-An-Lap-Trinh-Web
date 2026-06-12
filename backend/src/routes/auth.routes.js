@@ -189,8 +189,17 @@ router.put(
   protect,
   [
     body("name").optional().trim().notEmpty().withMessage("Ten khong duoc de trong"),
-    body("phone").optional({ checkFalsy: true }).isMobilePhone("vi-VN").withMessage("So dien thoai khong hop le"),
-    body("address").optional({ checkFalsy: true }).trim().isLength({ max: 255 }).withMessage("Dia chi toi da 255 ky tu")
+    body("phone").optional({ checkFalsy: true }).trim().isLength({ max: 100 }).withMessage("Số điện thoại tối đa 100 ký tự"),
+    body("address").optional({ checkFalsy: true }).trim().isLength({ max: 255 }).withMessage("Dia chi toi da 255 ky tu"),
+    body("avatar")
+      .optional({ checkFalsy: true })
+      .custom((value) => {
+        const isPreset = /^preset:(cat|dog|fox|panda|bear|lion)$/.test(value);
+        const isImage = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(value);
+        if (!isPreset && !isImage) throw new Error("Ảnh đại diện không hợp lệ");
+        if (value.length > 1500000) throw new Error("Ảnh đại diện quá lớn");
+        return true;
+      })
   ],
   validate,
   updateProfile

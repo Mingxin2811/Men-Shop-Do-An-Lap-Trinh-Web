@@ -42,6 +42,7 @@ model User {
   password  String
   phone     String?
   address   String?
+  avatar    String?
   role      UserRole   @default(CUSTOMER)
   isActive  Boolean    @default(true)
   resetToken       String?
