@@ -33,6 +33,17 @@ const normalizeImages = (images = []) =>
     .filter(Boolean)
     .map((url, index) => ({ url, position: index }));
 
+// Gắn averageRating + reviewCount cho sản phẩm từ mảng reviews (chỉ chứa rating).
+const withRating = (product) => {
+  const ratings = (product.reviews || []).map((r) => r.rating);
+  const reviewCount = ratings.length;
+  const averageRating = reviewCount
+    ? Math.round((ratings.reduce((a, b) => a + b, 0) / reviewCount) * 10) / 10
+    : 0;
+  const { reviews, ...rest } = product;
+  return { ...rest, reviewCount, averageRating };
+};
+
 const getProducts = async (req, res, next) => {
   try {
     const {
@@ -82,7 +93,7 @@ const getProducts = async (req, res, next) => {
     const [products, totalProducts] = await prisma.$transaction([
       prisma.product.findMany({
         where,
-        include: { category: true, variants: true },
+        include: { category: true, variants: true, reviews: { select: { rating: true } } },
         skip,
         take,
         orderBy
@@ -91,7 +102,7 @@ const getProducts = async (req, res, next) => {
     ]);
 
     return successResponse(res, "Lay danh sach san pham thanh cong", {
-      products,
+      products: products.map(withRating),
       totalProducts,
       totalPages: Math.ceil(totalProducts / take),
       currentPage
@@ -159,14 +170,19 @@ const getProductById = async (req, res, next) => {
     const { id } = req.params;
     const product = await prisma.product.findFirst({
       where: { id, isActive: true },
-      include: { category: true, variants: true, images: { orderBy: { position: "asc" } } }
+      include: {
+        category: true,
+        variants: true,
+        images: { orderBy: { position: "asc" } },
+        reviews: { select: { rating: true } }
+      }
     });
 
     if (!product) {
       return errorResponse(res, "Khong tim thay san pham", 404);
     }
 
-    return successResponse(res, "Lay chi tiet san pham thanh cong", product);
+    return successResponse(res, "Lay chi tiet san pham thanh cong", withRating(product));
   } catch (error) {
     return next(error);
   }

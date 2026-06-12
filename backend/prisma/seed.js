@@ -66,7 +66,7 @@ async function main() {
   const adminPassword = await bcrypt.hash("Admin123456", 10);
   const customerPassword = await bcrypt.hash("Customer123456", 10);
 
-  await prisma.user.upsert({
+  const adminUser = await prisma.user.upsert({
     where: { email: "admin@menshop.com" },
     update: {},
     create: {
@@ -77,7 +77,7 @@ async function main() {
     }
   });
 
-  await prisma.user.upsert({
+  const customerUser = await prisma.user.upsert({
     where: { email: "customer@menshop.com" },
     update: {},
     create: {
@@ -179,6 +179,32 @@ async function main() {
         position: index
       }))
     });
+  }
+
+  // Danh gia demo cho vai san pham dau tien.
+  const reviewSamples = [
+    { rating: 5, comment: "Chat vai dep, form chuan, rat hai long!" },
+    { rating: 4, comment: "San pham tot so voi gia tien, giao hang nhanh." },
+    { rating: 5, comment: "Mac len rat hop, se ung ho shop tiep." },
+    { rating: 3, comment: "Tam on, mau hoi khac so voi anh mot chut." }
+  ];
+  const someProducts = await prisma.product.findMany({ take: 6, orderBy: { createdAt: "asc" } });
+  for (let i = 0; i < someProducts.length; i++) {
+    const product = someProducts[i];
+    const r1 = reviewSamples[i % reviewSamples.length];
+    await prisma.review.upsert({
+      where: { productId_userId: { productId: product.id, userId: customerUser.id } },
+      update: { rating: r1.rating, comment: r1.comment },
+      create: { productId: product.id, userId: customerUser.id, rating: r1.rating, comment: r1.comment }
+    });
+    if (i % 2 === 0) {
+      const r2 = reviewSamples[(i + 1) % reviewSamples.length];
+      await prisma.review.upsert({
+        where: { productId_userId: { productId: product.id, userId: adminUser.id } },
+        update: { rating: r2.rating, comment: r2.comment },
+        create: { productId: product.id, userId: adminUser.id, rating: r2.rating, comment: r2.comment }
+      });
+    }
   }
 }
 

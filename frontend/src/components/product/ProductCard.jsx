@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import WishlistButton from './WishlistButton';
+import StarRating from './StarRating';
 import { formatPrice, getSaleInfo } from '../../utils/price';
 import './ProductCard.css';
 
@@ -76,6 +77,12 @@ export default function ProductCard({ product }) {
       <div className="product-card__info">
         <p className="product-card__category">{product.category?.name}</p>
         <h3 className="product-card__name">{product.name}</h3>
+        {product.reviewCount > 0 && (
+          <div className="product-card__rating">
+            <StarRating value={product.averageRating} size={13} />
+            <span>({product.reviewCount})</span>
+          </div>
+        )}
         {sale.onSale ? (
           <p className="product-card__price">
             <span className="product-card__price-sale">{formatPrice(sale.effectivePrice)}</span>

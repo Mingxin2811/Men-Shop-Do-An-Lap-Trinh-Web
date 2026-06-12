@@ -8,6 +8,11 @@ const {
   updateProduct,
   deleteProduct
 } = require("../controllers/product.controller");
+const {
+  getProductReviews,
+  upsertReview,
+  deleteMyReview
+} = require("../controllers/review.controller");
 const protect = require("../middlewares/auth.middleware");
 const adminOnly = require("../middlewares/admin.middleware");
 const validate = require("../middlewares/validate.middleware");
@@ -36,5 +41,19 @@ router.get("/:id", getProductById);
 router.post("/", protect, adminOnly, productValidation, validate, createProduct);
 router.put("/:id", protect, adminOnly, updateProductValidation, validate, updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
+
+// Danh gia san pham
+router.get("/:id/reviews", getProductReviews);
+router.post(
+  "/:id/reviews",
+  protect,
+  [
+    body("rating").isInt({ min: 1, max: 5 }).withMessage("Diem danh gia phai tu 1 den 5"),
+    body("comment").optional({ checkFalsy: true }).isLength({ max: 1000 }).withMessage("Nhan xet toi da 1000 ky tu")
+  ],
+  validate,
+  upsertReview
+);
+router.delete("/:id/reviews", protect, deleteMyReview);
 
 module.exports = router;

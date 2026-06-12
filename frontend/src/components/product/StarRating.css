@@ -1,0 +1,34 @@
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.star-rating__star,
+.star-rating__btn {
+  display: inline-flex;
+  color: var(--warm-gray);
+}
+
+.star-rating__star.filled,
+.star-rating__btn.filled {
+  color: var(--accent);
+}
+
+.star-rating--input {
+  gap: 4px;
+}
+
+.star-rating__btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.star-rating__btn:hover {
+  transform: scale(1.15);
+}

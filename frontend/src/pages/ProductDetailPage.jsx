@@ -10,6 +10,8 @@ import { getSaleInfo } from '../utils/price';
 import WishlistButton from '../components/product/WishlistButton';
 import SizeGuideModal from '../components/product/SizeGuideModal';
 import RecentlyViewedSection from '../components/product/RecentlyViewedSection';
+import StarRating from '../components/product/StarRating';
+import ProductReviews from '../components/product/ProductReviews';
 import './ProductDetailPage.css';
 
 const formatPrice = (p) =>
@@ -35,6 +37,7 @@ export default function ProductDetailPage() {
   const [success, setSuccess] = useState('');
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [activeImage, setActiveImage] = useState('');
+  const [ratingStats, setRatingStats] = useState({ averageRating: 0, totalReviews: 0 });
 
   useEffect(() => {
     setLoading(true);
@@ -50,6 +53,7 @@ export default function ProductDetailPage() {
         };
         setProduct(p);
         setActiveImage(p.imageUrl);
+        setRatingStats({ averageRating: p.averageRating || 0, totalReviews: p.reviewCount || 0 });
         track(p.id);
         setSelectedSize('');
         setSelectedColor('');
@@ -159,6 +163,12 @@ export default function ProductDetailPage() {
         <div className="pdp-info">
           <p className="pdp-category">{product.category?.name}</p>
           <h1 className="pdp-title">{product.name}</h1>
+          {ratingStats.totalReviews > 0 && (
+            <a href="#reviews" className="pdp-rating">
+              <StarRating value={ratingStats.averageRating} size={16} />
+              <span>{ratingStats.averageRating.toFixed(1)} · {ratingStats.totalReviews} đánh giá</span>
+            </a>
+          )}
           {(() => {
             const sale = getSaleInfo(product);
             return sale.onSale ? (
@@ -294,6 +304,14 @@ export default function ProductDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Đánh giá sản phẩm */}
+      <div id="reviews">
+        <ProductReviews
+          productId={product.id}
+          onStatsChange={(averageRating, totalReviews) => setRatingStats({ averageRating, totalReviews })}
+        />
+      </div>
 
       {/* Sản phẩm vừa xem */}
       <RecentlyViewedSection excludeId={product.id} />
