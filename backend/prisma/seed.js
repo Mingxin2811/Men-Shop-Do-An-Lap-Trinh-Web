@@ -39,6 +39,13 @@ const products = [
   ["Nón baseball basic", "Nón baseball basic dễ phối với áo thun, jeans và sneaker.", 189000, "Phụ kiện", "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=900"]
 ];
 
+// Anh chi tiet dung chung cho gallery (demo nhieu anh san pham).
+const galleryExtras = [
+  "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=900",
+  "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=900",
+  "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=900"
+];
+
 const variantSets = ["S", "M", "L"].flatMap((size, sizeIndex) =>
   ["Đen", "Trắng", "Xám"].map((color, colorIndex) => ({
     size,
@@ -162,6 +169,16 @@ async function main() {
         }
       });
     }
+
+    // Dat lai gallery anh phu (idempotent): xoa cu, tao moi 2 anh chi tiet.
+    await prisma.productImage.deleteMany({ where: { productId: product.id } });
+    await prisma.productImage.createMany({
+      data: galleryExtras.slice(0, 2).map((url, index) => ({
+        productId: product.id,
+        url,
+        position: index
+      }))
+    });
   }
 }
 

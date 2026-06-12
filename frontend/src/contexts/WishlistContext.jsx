@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
+import { wishlistService } from '../services/wishlist.service';
 
 const WishlistContext = createContext(null);
 
@@ -15,35 +17,73 @@ const readStored = () => {
 };
 
 export function WishlistProvider({ children }) {
+  const { user } = useAuth();
   const [ids, setIds] = useState(readStored);
 
+  // Đồng bộ theo trạng thái đăng nhập:
+  // - Khách: dùng localStorage.
+  // - Đăng nhập: gộp wishlist khách vào tài khoản rồi tải danh sách từ server.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  }, [ids]);
+    let cancelled = false;
 
-  // Đồng bộ khi mở nhiều tab cùng lúc
+    async function load() {
+      if (!user) {
+        setIds(readStored());
+        return;
+      }
+      try {
+        const localIds = readStored();
+        if (localIds.length > 0) {
+          await Promise.all(localIds.map((id) => wishlistService.add(id).catch(() => {})));
+        }
+        const res = await wishlistService.get();
+        if (cancelled) return;
+        const serverIds = (res.data.data || []).map((p) => p.id);
+        setIds(serverIds);
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Lỗi mạng: giữ nguyên danh sách hiện tại.
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  // Chỉ lưu localStorage khi là khách (chưa đăng nhập).
+  useEffect(() => {
+    if (!user) localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+  }, [ids, user]);
+
+  // Đồng bộ giữa nhiều tab khi là khách.
   useEffect(() => {
     const sync = (e) => {
-      if (e.key === STORAGE_KEY) setIds(readStored());
+      if (e.key === STORAGE_KEY && !user) setIds(readStored());
     };
     window.addEventListener('storage', sync);
     return () => window.removeEventListener('storage', sync);
-  }, []);
+  }, [user]);
 
   const has = useCallback((id) => ids.includes(id), [ids]);
 
   const toggle = useCallback((id) => {
     if (!id) return;
-    setIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]
-    );
-  }, []);
+    const exists = ids.includes(id);
+    setIds((prev) => (exists ? prev.filter((x) => x !== id) : [id, ...prev]));
+    if (user) {
+      (exists ? wishlistService.remove(id) : wishlistService.add(id)).catch(() => {});
+    }
+  }, [ids, user]);
 
   const remove = useCallback((id) => {
     setIds((prev) => prev.filter((x) => x !== id));
-  }, []);
+    if (user) wishlistService.remove(id).catch(() => {});
+  }, [user]);
 
-  const clear = useCallback(() => setIds([]), []);
+  const clear = useCallback(() => {
+    setIds([]);
+    if (user) wishlistService.clear().catch(() => {});
+  }, [user]);
 
   return (
     <WishlistContext.Provider value={{ ids, count: ids.length, has, toggle, remove, clear }}>

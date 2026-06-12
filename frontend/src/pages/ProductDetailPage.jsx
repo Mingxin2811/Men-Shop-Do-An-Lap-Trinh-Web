@@ -34,6 +34,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -48,6 +49,7 @@ export default function ProductDetailPage() {
           })) || [],
         };
         setProduct(p);
+        setActiveImage(p.imageUrl);
         track(p.id);
         setSelectedSize('');
         setSelectedColor('');
@@ -75,6 +77,10 @@ export default function ProductDetailPage() {
 
   const sizes = [...new Set(product?.variants?.map(v => v.size) || [])];
   const colors = [...new Set(product?.variants?.filter(v => !selectedSize || v.size === selectedSize).map(v => v.color) || [])];
+  const gallery = product
+    ? [...new Set([product.imageUrl, ...(product.images?.map(img => img.url) || [])].filter(Boolean))]
+    : [];
+  const mainImage = activeImage || product?.imageUrl;
 
   const availableStock = selectedVariant
     ? selectedVariant.stock
@@ -116,17 +122,37 @@ export default function ProductDetailPage() {
       </div>
 
       <div className="pdp-body container">
-        {/* Image */}
+        {/* Image gallery */}
         <div className="pdp-gallery">
           <div className="pdp-gallery__main">
             <img
-              src={product.imageUrl}
+              src={mainImage}
               alt={product.name}
               onError={(e) => {
                 e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800';
               }}
             />
           </div>
+          {gallery.length > 1 && (
+            <div className="pdp-gallery__thumbs">
+              {gallery.map((url) => (
+                <button
+                  key={url}
+                  type="button"
+                  className={`pdp-thumb${mainImage === url ? ' active' : ''}`}
+                  onClick={() => setActiveImage(url)}
+                  aria-label="Xem ảnh"
+                >
+                  <img
+                    src={url}
+                    alt=""
+                    loading="lazy"
+                    onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info */}

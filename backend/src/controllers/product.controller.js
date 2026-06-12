@@ -25,6 +25,14 @@ const parseSalePrice = (value) => {
   return Number.isFinite(num) ? num : null;
 };
 
+// Chuẩn hoá danh sách ảnh phụ (gallery): bỏ url rỗng, gán thứ tự (position).
+const normalizeImages = (images = []) =>
+  (Array.isArray(images) ? images : [])
+    .map((img) => (typeof img === "string" ? img : img?.url))
+    .map((url) => String(url || "").trim())
+    .filter(Boolean)
+    .map((url, index) => ({ url, position: index }));
+
 const getProducts = async (req, res, next) => {
   try {
     const {
@@ -127,7 +135,7 @@ const getAdminProducts = async (req, res, next) => {
     const [products, totalProducts] = await prisma.$transaction([
       prisma.product.findMany({
         where,
-        include: { category: true, variants: true },
+        include: { category: true, variants: true, images: { orderBy: { position: "asc" } } },
         skip,
         take,
         orderBy
@@ -151,7 +159,7 @@ const getProductById = async (req, res, next) => {
     const { id } = req.params;
     const product = await prisma.product.findFirst({
       where: { id, isActive: true },
-      include: { category: true, variants: true }
+      include: { category: true, variants: true, images: { orderBy: { position: "asc" } } }
     });
 
     if (!product) {
@@ -166,7 +174,7 @@ const getProductById = async (req, res, next) => {
 
 const createProduct = async (req, res, next) => {
   try {
-    const { categoryId, name, description, price, salePrice, imageUrl, stock, variants, isActive } = req.body;
+    const { categoryId, name, description, price, salePrice, imageUrl, stock, variants, images, isActive } = req.body;
     const slug = slugify(name);
 
     const category = await prisma.category.findUnique({ where: { id: categoryId } });
@@ -205,9 +213,12 @@ const createProduct = async (req, res, next) => {
         ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
         variants: {
           create: normalizeVariants(variants)
+        },
+        images: {
+          create: normalizeImages(images)
         }
       },
-      include: { category: true, variants: true }
+      include: { category: true, variants: true, images: { orderBy: { position: "asc" } } }
     });
 
     return successResponse(res, "Them san pham thanh cong", product, 201);
@@ -219,7 +230,7 @@ const createProduct = async (req, res, next) => {
 const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { categoryId, name, description, price, salePrice, imageUrl, stock, variants, isActive } = req.body;
+    const { categoryId, name, description, price, salePrice, imageUrl, stock, variants, images, isActive } = req.body;
 
     const existingProduct = await prisma.product.findUnique({ where: { id } });
     if (!existingProduct) {
@@ -289,10 +300,17 @@ const updateProduct = async (req, res, next) => {
         };
       }
 
+      if (images !== undefined) {
+        await tx.productImage.deleteMany({ where: { productId: id } });
+        dataToUpdate.images = {
+          create: normalizeImages(images)
+        };
+      }
+
       return tx.product.update({
         where: { id },
         data: dataToUpdate,
-        include: { category: true, variants: true }
+        include: { category: true, variants: true, images: { orderBy: { position: "asc" } } }
       });
     });
 

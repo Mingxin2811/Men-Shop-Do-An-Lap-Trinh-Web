@@ -15,6 +15,7 @@ function defaultForm(product) {
     price: product.price || '',
     salePrice: product.salePrice ?? '',
     imageUrl: product.imageUrl || '',
+    images: product.images?.map(img => img.url) || [],
     stock: product.stock ?? '',
     isActive: Boolean(product.isActive),
     variants: product.variants?.length
@@ -31,6 +32,7 @@ function defaultForm(product) {
     price: '',
     salePrice: '',
     imageUrl: '',
+    images: [],
     stock: '',
     isActive: true,
     variants: [],
@@ -128,6 +130,7 @@ export default function AdminProductsPage() {
     ...form,
     price: parseFloat(form.price),
     salePrice: form.salePrice === '' || form.salePrice == null ? null : parseFloat(form.salePrice),
+    images: (form.images || []).map(u => (u || '').trim()).filter(Boolean),
     stock: parseInt(form.stock, 10),
     isActive: Boolean(form.isActive),
     variants: form.variants
@@ -309,12 +312,56 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">URL ảnh</label>
+                <label className="form-label">URL ảnh chính</label>
                 <input
                   className="form-input"
                   value={form.imageUrl}
                   onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
                 />
+              </div>
+
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Ảnh phụ (gallery)</label>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setForm(f => ({ ...f, images: [...(f.images || []), ''] }))}
+                  >
+                    + Thêm ảnh
+                  </button>
+                </div>
+                {(form.images || []).length === 0 ? (
+                  <p style={{ color: 'var(--mid-gray)', fontSize: '0.8rem' }}>
+                    Chưa có ảnh phụ. Trang chi tiết sẽ chỉ hiện ảnh chính.
+                  </p>
+                ) : (
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {form.images.map((url, index) => (
+                      <div key={index} style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          className="form-input"
+                          placeholder="https://..."
+                          value={url}
+                          onChange={e => setForm(f => ({
+                            ...f,
+                            images: f.images.map((u, i) => (i === index ? e.target.value : u)),
+                          }))}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          onClick={() => setForm(f => ({
+                            ...f,
+                            images: f.images.filter((_, i) => i !== index),
+                          }))}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="form-group admin-product-visibility">
