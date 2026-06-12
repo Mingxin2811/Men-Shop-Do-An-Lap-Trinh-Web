@@ -32,7 +32,7 @@
 }
 
 .plp-filter-btn {
-  display: flex;
+  display: none; /* desktop: sidebar luon hien nen an nut nay */
   align-items: center;
   gap: 6px;
   font-size: 0.75rem;
@@ -220,6 +220,10 @@
 @media (max-width: 900px) {
   .plp-body {
     flex-direction: column;
+  }
+
+  .plp-filter-btn {
+    display: flex; /* mobile: hien nut de mo drawer bo loc */
   }
 
   .plp-filters {
