@@ -94,7 +94,8 @@
 }
 
 .navbar__login,
-.navbar__cart {
+.navbar__cart,
+.navbar__icon-btn {
   position: relative;
   display: flex;
   align-items: center;
@@ -103,8 +104,77 @@
 }
 
 .navbar__login:hover,
-.navbar__cart:hover {
+.navbar__cart:hover,
+.navbar__icon-btn:hover {
   opacity: 0.6;
+}
+
+/* Badge dùng chung (wishlist) */
+.navbar__badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--red);
+  color: var(--white);
+  font-size: 0.6rem;
+  font-weight: 500;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Search panel trượt xuống dưới thanh nav */
+.navbar__search {
+  max-height: 0;
+  overflow: hidden;
+  background: rgba(250, 250, 248, 0.98);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid transparent;
+  transition: max-height 0.35s ease, border-color 0.35s ease;
+}
+
+.navbar__search.open {
+  max-height: 90px;
+  border-top-color: var(--border);
+}
+
+.navbar__search-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-xl);
+}
+
+.navbar__search-form svg {
+  color: var(--mid-gray);
+  flex-shrink: 0;
+}
+
+.navbar__search-form input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--black);
+  padding: 6px 0;
+}
+
+.navbar__search-form input:focus {
+  outline: none;
+}
+
+.navbar__search-close {
+  font-size: 1rem;
+  color: var(--mid-gray);
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.navbar__search-close:hover {
+  color: var(--black);
 }
 
 .navbar__cart-badge {
@@ -249,6 +319,37 @@
   height: 1px;
   background: var(--border);
   margin: var(--spacing-sm) var(--spacing-xl);
+}
+
+/* Ô tìm kiếm trong menu mobile */
+.navbar__mobile-search {
+  display: flex;
+  align-items: center;
+  margin: 0 var(--spacing-xl) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--offwhite);
+}
+
+.navbar__mobile-search input {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  color: var(--black);
+}
+
+.navbar__mobile-search input:focus {
+  outline: none;
+}
+
+.navbar__mobile-search button {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: var(--mid-gray);
+  background: none;
 }
 
 @media (max-width: 768px) {

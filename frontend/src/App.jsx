@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { WishlistProvider } from './contexts/WishlistContext';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import { PrivateRoute, AdminRoute } from './routes/ProtectedRoutes';
@@ -10,6 +11,7 @@ import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
 import CartPage from './pages/CartPage';
+import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import { OrderHistoryPage, OrderDetailPage } from './pages/OrderPages';
@@ -23,6 +25,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <WishlistProvider>
         <CartProvider>
           <Routes>
             {/* Public routes */}
@@ -30,6 +33,7 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/products" element={<ProductListPage />} />
               <Route path="/products/:id" element={<ProductDetailPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
@@ -57,6 +61,7 @@ export default function App() {
             </Route>
           </Routes>
         </CartProvider>
+        </WishlistProvider>
       </AuthProvider>
     </BrowserRouter>
   );

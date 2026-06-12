@@ -4,6 +4,7 @@ import { productService } from '../services/product.service';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatProductColor, normalizeProductColor } from '../utils/productOptions';
+import WishlistButton from '../components/product/WishlistButton';
 import './ProductDetailPage.css';
 
 const formatPrice = (p) =>
@@ -205,6 +206,7 @@ export default function ProductDetailPage() {
             >
               {adding ? <span className="spinner" /> : availableStock === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
             </button>
+            <WishlistButton productId={product.id} className="wishlist-btn--outline" size={22} />
             <Link to="/cart" className="btn btn-outline btn-lg">Giỏ hàng</Link>
           </div>
 

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import WishlistButton from './WishlistButton';
 import './ProductCard.css';
 
 const formatPrice = (price) =>
@@ -43,6 +44,7 @@ export default function ProductCard({ product }) {
             e.target.src = `https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format`;
           }}
         />
+        <WishlistButton productId={product.id} className="wishlist-btn--floating" size={18} />
         <div className="product-card__overlay">
           <button
             className={`product-card__quick-add${added ? ' added' : ''}`}
