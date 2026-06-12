@@ -1,0 +1,136 @@
+.dash-charts {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.dash-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: var(--spacing-lg);
+}
+
+.dash-card__title {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Bieu do cot doanh thu */
+.dash-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+  height: 180px;
+  padding-top: var(--spacing-md);
+}
+
+.dash-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.dash-bar {
+  width: 100%;
+  max-width: 38px;
+  background: linear-gradient(to top, var(--accent-dark), var(--accent));
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+  transition: height 0.4s ease;
+  position: relative;
+}
+
+.dash-bar-col__label {
+  font-size: 0.65rem;
+  color: var(--mid-gray);
+  white-space: nowrap;
+}
+
+.dash-bar-col__value {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Don theo trang thai */
+.dash-status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+}
+
+.dash-status-row__label {
+  width: 90px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.dash-status-row__track {
+  flex: 1;
+  height: 8px;
+  background: var(--offwhite);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.dash-status-row__fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.dash-status-row__count {
+  width: 28px;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* Top san pham */
+.dash-top-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-top-item:last-child { border-bottom: none; }
+
+.dash-top-item__rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--black);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.dash-top-item__name {
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+.dash-top-item__qty {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .dash-charts { grid-template-columns: 1fr; }
+}

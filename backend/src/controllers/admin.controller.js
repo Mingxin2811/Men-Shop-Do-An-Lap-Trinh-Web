@@ -1,36 +1,84 @@
 const prisma = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
 
+const REVENUE_WHERE = {
+  OR: [{ status: "COMPLETED" }, { paymentStatus: "PAID" }]
+};
+
 const getDashboardStats = async (req, res, next) => {
   try {
-    const [totalProducts, totalOrders, totalUsers, paidOrders, latestOrders] = await prisma.$transaction([
+    // Mốc 7 ngày gần nhất (gồm hôm nay).
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    since.setDate(since.getDate() - 6);
+
+    const [
+      totalProducts,
+      totalOrders,
+      totalUsers,
+      paidOrders,
+      latestOrders,
+      ordersByStatusRaw,
+      topProductsRaw,
+      recentRevenueOrders
+    ] = await prisma.$transaction([
       prisma.product.count({ where: { isActive: true } }),
       prisma.order.count(),
       prisma.user.count({ where: { role: "CUSTOMER" } }),
-      prisma.order.findMany({
-        where: {
-          OR: [
-            { status: "COMPLETED" },
-            { paymentStatus: "PAID" }
-          ]
-        },
-        select: { totalAmount: true }
-      }),
+      prisma.order.findMany({ where: REVENUE_WHERE, select: { totalAmount: true } }),
       prisma.order.findMany({
         take: 5,
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: "desc" }
+      }),
+      prisma.order.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.orderItem.groupBy({
+        by: ["productName"],
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 5
+      }),
+      prisma.order.findMany({
+        where: { ...REVENUE_WHERE, createdAt: { gte: since } },
+        select: { totalAmount: true, createdAt: true }
       })
     ]);
 
     const totalRevenue = paidOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
+
+    // Doanh thu theo tung ngay trong 7 ngay gan nhat.
+    const dayKeys = [];
+    for (let i = 0; i < 7; i += 1) {
+      const d = new Date(since);
+      d.setDate(since.getDate() + i);
+      dayKeys.push(d.toISOString().slice(0, 10));
+    }
+    const revenueMap = Object.fromEntries(dayKeys.map((k) => [k, 0]));
+    for (const order of recentRevenueOrders) {
+      const key = new Date(order.createdAt).toISOString().slice(0, 10);
+      if (revenueMap[key] !== undefined) revenueMap[key] += Number(order.totalAmount);
+    }
+    const revenueByDay = dayKeys.map((date) => ({ date, revenue: revenueMap[date] }));
+
+    const ordersByStatus = ordersByStatusRaw.map((row) => ({
+      status: row.status,
+      count: row._count._all
+    }));
+
+    const topProducts = topProductsRaw.map((row) => ({
+      name: row.productName,
+      quantity: row._sum.quantity || 0
+    }));
 
     return successResponse(res, "Lay thong tin dashboard thanh cong", {
       totalProducts,
       totalOrders,
       totalUsers,
       totalRevenue,
-      latestOrders
+      latestOrders,
+      revenueByDay,
+      ordersByStatus,
+      topProducts
     });
   } catch (error) {
     return next(error);

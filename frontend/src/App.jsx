@@ -18,10 +18,12 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import { OrderHistoryPage, OrderDetailPage } from './pages/OrderPages';
 import { PaymentSuccessPage, PaymentCancelPage } from './pages/PaymentPages';
+import { BlogListPage, BlogDetailPage } from './pages/BlogPages';
 import NotFoundPage from './pages/NotFoundPage';
 
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminBlogPage from './pages/admin/AdminBlogPage';
 import { AdminCategoriesPage, AdminOrdersPage, AdminUsersPage } from './pages/admin/AdminPages';
 
 export default function App() {
@@ -38,6 +40,8 @@ export default function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/products" element={<ProductListPage />} />
                     <Route path="/products/:id" element={<ProductDetailPage />} />
+                    <Route path="/blog" element={<BlogListPage />} />
+                    <Route path="/blog/:slug" element={<BlogDetailPage />} />
                     <Route path="/wishlist" element={<WishlistPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
@@ -62,6 +66,7 @@ export default function App() {
                     <Route element={<AdminLayout />}>
                       <Route path="/admin" element={<AdminDashboardPage />} />
                       <Route path="/admin/products" element={<AdminProductsPage />} />
+                      <Route path="/admin/blog" element={<AdminBlogPage />} />
                       <Route path="/admin/categories" element={<AdminCategoriesPage />} />
                       <Route path="/admin/orders" element={<AdminOrdersPage />} />
                       <Route path="/admin/users" element={<AdminUsersPage />} />

@@ -74,6 +74,7 @@ export default function Navbar() {
           <li><NavLink to="/products?category=ao-thun">Áo</NavLink></li>
           <li><NavLink to="/products?category=quan-jeans">Quần</NavLink></li>
           <li><NavLink to="/products?category=phu-kien">Phụ kiện</NavLink></li>
+          <li><NavLink to="/blog">Blog</NavLink></li>
         </ul>
 
         {/* Actions */}
@@ -170,6 +171,7 @@ export default function Navbar() {
         <NavLink to="/products?category=ao-thun">Áo</NavLink>
         <NavLink to="/products?category=quan-jeans">Quần</NavLink>
         <NavLink to="/products?category=phu-kien">Phụ kiện</NavLink>
+        <NavLink to="/blog">Blog</NavLink>
         <NavLink to="/wishlist">Yêu thích{wishlistCount > 0 ? ` (${wishlistCount})` : ''}</NavLink>
         <div className="navbar__mobile-divider" />
         {user ? (

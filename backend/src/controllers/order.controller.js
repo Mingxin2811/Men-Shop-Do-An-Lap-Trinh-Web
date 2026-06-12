@@ -1,6 +1,7 @@
 const prisma = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
 const { getEffectivePrice } = require("../utils/price");
+const { sendMail, buildOrderConfirmationEmail } = require("../utils/mailer");
 
 const createOrder = async (req, res, next) => {
   try {
@@ -83,6 +84,14 @@ const createOrder = async (req, res, next) => {
         include: { items: true }
       });
     });
+
+    // Gui email xac nhan don hang (khong chan luong dat hang neu loi).
+    try {
+      const { subject, text, html } = buildOrderConfirmationEmail(order, req.user);
+      await sendMail({ to: req.user.email, subject, text, html });
+    } catch (mailError) {
+      console.error("Gui email xac nhan don hang that bai:", mailError.message);
+    }
 
     return successResponse(res, "Dat hang thanh cong", order, 201);
   } catch (error) {

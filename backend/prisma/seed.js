@@ -206,6 +206,38 @@ async function main() {
       });
     }
   }
+
+  // Bai viet blog demo.
+  const posts = [
+    {
+      title: "5 cach phoi do nam thanh lich cho mua he",
+      excerpt: "Goi y cac cong thuc phoi do nam vua mat me vua lich su cho nhung ngay he.",
+      coverImage: "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=1200",
+      content:
+        "Mua he la luc de the hien phong cach ca tinh ma van thoai mai. Hay uu tien chat lieu cotton, linen thoang khi.\n\n1. Ao thun trang + quan short kaki.\n2. So mi linen + quan chinos.\n3. Polo + quan jeans lung.\n4. Ao thun hoa tiet + quan tay sang mau.\n5. Phu kien: non, kinh ram, giay sneaker trang.\n\nNguyen tac chung la giu mau sac hai hoa va form vua van."
+    },
+    {
+      title: "Huong dan chon size quan ao nam chuan nhat",
+      excerpt: "Lam sao de chon dung size khi mua sam online? Bai viet nay se giup ban.",
+      coverImage: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200",
+      content:
+        "Chon dung size giup trang phuc ton dang va thoai mai hon.\n\n- Do vong nguc, vong eo va so sanh voi bang size cua shop.\n- Neu o giua hai size, uu tien size lon hon de de chiu.\n- Voi ao so mi, chu y vong co va do rong vai.\n\nMen's Shop luon cung cap bang size chi tiet o moi san pham."
+    },
+    {
+      title: "Xu huong thoi trang nam noi bat nam nay",
+      excerpt: "Diem qua nhung xu huong thoi trang nam dang duoc ua chuong.",
+      coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200",
+      content:
+        "Nam nay, phong cach toi gian (minimal) va tone mau trung tinh len ngoi.\n\nCac mon do oversized, chat lieu ben vung va thiet ke da nang duoc ua chuong. Phu kien da that don gian nhung tinh te."
+    }
+  ];
+  for (const post of posts) {
+    await prisma.post.upsert({
+      where: { slug: slugify(post.title) },
+      update: { ...post, slug: slugify(post.title) },
+      create: { ...post, slug: slugify(post.title) }
+    });
+  }
 }
 
 main()
