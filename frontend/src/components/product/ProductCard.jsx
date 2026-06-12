@@ -20,11 +20,11 @@ export default function ProductCard({ product }) {
 
   const handleQuickAdd = async (e) => {
     e.preventDefault();
-    if (!user) { navigate('/login'); return; }
     if (product.variants?.length > 0) {
       navigate(`/products/${product.id}`);
       return;
     }
+    if (!user) { navigate('/login'); return; }
     try {
       setAdding(true);
       await addToCart(product.id, 1, null);

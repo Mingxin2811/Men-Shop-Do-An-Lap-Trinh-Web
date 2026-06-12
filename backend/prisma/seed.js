@@ -21,22 +21,38 @@ const products = [
   ["Áo thun oversized", "Áo thun oversized phong cách streetwear.", 249000, "Áo thun", "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=900", 199000],
   ["Áo thun premium modal", "Áo thun modal mềm mịn, ít nhăn và thoáng khi mặc hằng ngày.", 289000, "Áo thun", "https://images.unsplash.com/photo-1583743814966-8936f37f4678?w=900"],
   ["Áo polo pique", "Áo polo vải pique đứng form, phù hợp đi làm và đi chơi.", 329000, "Áo thun", "https://images.unsplash.com/photo-1622470953794-aa9c70b0fb9d?w=900", 279000],
+  ["Áo thun cổ tròn tối giản", "Áo thun cổ tròn thiết kế tối giản, chất cotton co giãn nhẹ và dễ phối đồ.", 219000, "Áo thun", "https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=900"],
+  ["Áo polo phối viền", "Áo polo nam phối viền thanh lịch, phù hợp phong cách smart casual.", 359000, "Áo thun", "https://images.unsplash.com/photo-1571455786673-9d9d6c194f90?w=900", 309000],
   ["Áo sơ mi oxford", "Sơ mi oxford dày dặn, phù hợp công sở.", 399000, "Áo sơ mi", "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=900"],
   ["Áo sơ mi linen", "Sơ mi linen nhẹ, thoáng mát cho mùa hè.", 429000, "Áo sơ mi", "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=900"],
   ["Áo sơ mi kẻ caro", "Sơ mi caro trẻ trung, dễ mặc riêng hoặc khoác ngoài áo thun.", 389000, "Áo sơ mi", "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=900"],
   ["Áo sơ mi denim", "Sơ mi denim nam chất vải bền, phong cách casual mạnh mẽ.", 459000, "Áo sơ mi", "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900"],
+  ["Áo sơ mi trắng công sở", "Áo sơ mi trắng form slim thanh lịch, thích hợp đi làm và dự tiệc.", 419000, "Áo sơ mi", "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=900", 369000],
+  ["Áo sơ mi sọc dọc", "Sơ mi sọc dọc giúp vóc dáng cân đối, phong cách trẻ trung và hiện đại.", 409000, "Áo sơ mi", "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=900"],
   ["Áo khoác bomber", "Bomber jacket trẻ trung, giữ ấm vừa phải.", 699000, "Áo khoác", "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900", 549000],
   ["Áo khoác denim", "Áo khoác denim nam phong cách, bền bỉ.", 749000, "Áo khoác", "https://images.unsplash.com/photo-1543076447-215ad9ba6923?w=900"],
-  ["Áo khoác dù gió", "Áo khoác dù gió nhẹ, chắn gió và dễ gấp gọn khi di chuyển.", 599000, "Áo khoác", "https://images.unsplash.com/photo-1520975916090-3105956dac38?w=900"],
+  ["Áo khoác dù gió", "Áo khoác dù gió nhẹ, chắn gió và dễ gấp gọn khi di chuyển.", 599000, "Áo khoác", "https://images.unsplash.com/photo-1541635930383-c21a3eab7075?w=900"],
+  ["Áo khoác varsity", "Áo khoác varsity phối màu năng động, phù hợp phong cách đường phố.", 789000, "Áo khoác", "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=900", 679000],
+  ["Áo khoác da biker", "Áo khoác da biker nam cá tính, phom gọn và đường may chắc chắn.", 1199000, "Áo khoác", "https://images.unsplash.com/photo-1520975661595-6453be3f7070?w=900"],
+  ["Áo blazer nam", "Blazer nam phom hiện đại, dễ kết hợp cùng sơ mi hoặc áo thun.", 999000, "Áo khoác", "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900", 899000],
   ["Quần jeans slim fit", "Quần jeans slim fit tôn dáng, dễ phối giày.", 549000, "Quần jeans", "https://images.unsplash.com/photo-1542272604-787c3835535d?w=900", 449000],
   ["Quần jeans straight fit", "Quần jeans ống đứng cổ điển, thoải mái.", 579000, "Quần jeans", "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=900"],
   ["Quần jeans relaxed fit", "Quần jeans relaxed fit rộng vừa, thoải mái cho ngày năng động.", 599000, "Quần jeans", "https://images.unsplash.com/photo-1511196044526-5cb3bcb7071b?w=900"],
+  ["Quần jeans wash xanh", "Quần jeans wash xanh trẻ trung, chất denim dày vừa và ít bai dão.", 629000, "Quần jeans", "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900", 529000],
+  ["Quần jeans đen basic", "Quần jeans đen basic dễ phối, phom ôm vừa và phù hợp nhiều hoàn cảnh.", 569000, "Quần jeans", "https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=900"],
+  ["Quần jeans ống suông", "Quần jeans ống suông phong cách hiện đại, tạo cảm giác thoải mái khi vận động.", 619000, "Quần jeans", "https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?w=900"],
   ["Quần tây công sở", "Quần tây nam lịch sự, chất vải đứng form.", 499000, "Quần tây", "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900"],
   ["Quần chinos nam", "Quần chinos linh hoạt cho công sở và cuối tuần.", 459000, "Quần tây", "https://images.unsplash.com/photo-1517438476312-10d79c077509?w=900"],
-  ["Quần short kaki", "Quần short kaki gọn gàng, phù hợp đi chơi và du lịch.", 359000, "Quần tây", "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=900"],
+  ["Quần short kaki", "Quần short kaki gọn gàng, phù hợp đi chơi và du lịch.", 359000, "Quần tây", "https://images.unsplash.com/photo-1697319452360-ee47502e39f6?w=900"],
+  ["Quần tây slim fit", "Quần tây slim fit tôn dáng, chất vải co giãn nhẹ và ít nhăn.", 539000, "Quần tây", "https://images.unsplash.com/photo-1614492025699-2a9ea5b8c58b?w=900", 469000],
+  ["Quần chinos xếp ly", "Quần chinos xếp ly thanh lịch, mang lại cảm giác thoải mái suốt ngày dài.", 489000, "Quần tây", "https://images.unsplash.com/photo-1619933317484-5f142f791902?w=900"],
+  ["Quần short linen", "Quần short linen nhẹ và thoáng, phù hợp kỳ nghỉ hoặc thời tiết nóng.", 389000, "Quần tây", "https://images.unsplash.com/photo-1621496503717-095a410e1566?w=900"],
   ["Thắt lưng da nam", "Thắt lưng da tông màu đen cổ điển.", 299000, "Phụ kiện", "https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=900"],
   ["Ví da nam", "Ví da nam nhỏ gọn, nhiều ngăn tiện lợi.", 349000, "Phụ kiện", "https://images.unsplash.com/photo-1627123424574-724758594e93?w=900", 279000],
-  ["Nón baseball basic", "Nón baseball basic dễ phối với áo thun, jeans và sneaker.", 189000, "Phụ kiện", "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=900"]
+  ["Nón baseball basic", "Nón baseball basic dễ phối với áo thun, jeans và sneaker.", 189000, "Phụ kiện", "https://images.unsplash.com/photo-1521369909029-2afed882baee?w=900"],
+  ["Túi đeo chéo nam", "Túi đeo chéo nhỏ gọn, nhiều ngăn và phù hợp sử dụng hằng ngày.", 399000, "Phụ kiện", "https://images.unsplash.com/photo-1640101943658-793b33888edb?w=900", 329000],
+  ["Kính mát nam cổ điển", "Kính mát gọng vuông phong cách cổ điển, chống tia UV và dễ phối trang phục.", 429000, "Phụ kiện", "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=900"],
+  ["Đồng hồ dây da", "Đồng hồ nam dây da thiết kế tối giản, phù hợp trang phục công sở.", 899000, "Phụ kiện", "https://images.unsplash.com/photo-1678219716021-d988404932ec?w=900", 749000]
 ];
 
 // Anh chi tiet dung chung cho gallery (demo nhieu anh san pham).
@@ -117,6 +133,7 @@ async function main() {
         salePrice: normalizedSalePrice,
         imageUrl,
         stock: totalVariantStock,
+        isActive: true,
         categoryId: category.id
       },
       create: {
@@ -127,6 +144,7 @@ async function main() {
         salePrice: normalizedSalePrice,
         imageUrl,
         stock: totalVariantStock,
+        isActive: true,
         categoryId: category.id
       }
     });
@@ -210,33 +228,47 @@ async function main() {
   // Bai viet blog demo.
   const posts = [
     {
-      title: "5 cach phoi do nam thanh lich cho mua he",
-      excerpt: "Goi y cac cong thuc phoi do nam vua mat me vua lich su cho nhung ngay he.",
+      legacySlug: "5-cach-phoi-do-nam-thanh-lich-cho-mua-he",
+      title: "5 cách phối đồ nam thanh lịch cho mùa hè",
+      excerpt: "Gợi ý các công thức phối đồ nam vừa mát mẻ vừa lịch sự cho những ngày hè.",
       coverImage: "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=1200",
       content:
-        "Mua he la luc de the hien phong cach ca tinh ma van thoai mai. Hay uu tien chat lieu cotton, linen thoang khi.\n\n1. Ao thun trang + quan short kaki.\n2. So mi linen + quan chinos.\n3. Polo + quan jeans lung.\n4. Ao thun hoa tiet + quan tay sang mau.\n5. Phu kien: non, kinh ram, giay sneaker trang.\n\nNguyen tac chung la giu mau sac hai hoa va form vua van."
+        "Mùa hè là lúc thể hiện phong cách cá tính mà vẫn thoải mái. Hãy ưu tiên chất liệu cotton, linen thoáng khí.\n\n1. Áo thun trắng kết hợp quần short kaki.\n2. Sơ mi linen kết hợp quần chinos.\n3. Áo polo kết hợp quần jeans lửng.\n4. Áo thun họa tiết kết hợp quần tây sáng màu.\n5. Phụ kiện: nón, kính râm và giày sneaker trắng.\n\nNguyên tắc chung là giữ màu sắc hài hòa và lựa chọn phom dáng vừa vặn."
     },
     {
-      title: "Huong dan chon size quan ao nam chuan nhat",
-      excerpt: "Lam sao de chon dung size khi mua sam online? Bai viet nay se giup ban.",
+      legacySlug: "huong-dan-chon-size-quan-ao-nam-chuan-nhat",
+      title: "Hướng dẫn chọn size quần áo nam chuẩn nhất",
+      excerpt: "Làm sao để chọn đúng size khi mua sắm online? Bài viết này sẽ giúp bạn.",
       coverImage: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200",
       content:
-        "Chon dung size giup trang phuc ton dang va thoai mai hon.\n\n- Do vong nguc, vong eo va so sanh voi bang size cua shop.\n- Neu o giua hai size, uu tien size lon hon de de chiu.\n- Voi ao so mi, chu y vong co va do rong vai.\n\nMen's Shop luon cung cap bang size chi tiet o moi san pham."
+        "Chọn đúng size giúp trang phục tôn dáng và thoải mái hơn.\n\n- Đo vòng ngực, vòng eo và so sánh với bảng size của shop.\n- Nếu ở giữa hai size, ưu tiên size lớn hơn để dễ chịu.\n- Với áo sơ mi, chú ý vòng cổ và độ rộng vai.\n\nMen's Shop luôn cung cấp bảng size chi tiết ở mỗi sản phẩm."
     },
     {
-      title: "Xu huong thoi trang nam noi bat nam nay",
-      excerpt: "Diem qua nhung xu huong thoi trang nam dang duoc ua chuong.",
+      legacySlug: "xu-huong-thoi-trang-nam-noi-bat-nam-nay",
+      title: "Xu hướng thời trang nam nổi bật năm nay",
+      excerpt: "Điểm qua những xu hướng thời trang nam đang được ưa chuộng.",
       coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200",
       content:
-        "Nam nay, phong cach toi gian (minimal) va tone mau trung tinh len ngoi.\n\nCac mon do oversized, chat lieu ben vung va thiet ke da nang duoc ua chuong. Phu kien da that don gian nhung tinh te."
+        "Năm nay, phong cách tối giản (minimal) và tông màu trung tính lên ngôi.\n\nCác món đồ oversized, chất liệu bền vững và thiết kế đa năng được ưa chuộng. Phụ kiện da thật đơn giản nhưng tinh tế."
     }
   ];
   for (const post of posts) {
-    await prisma.post.upsert({
-      where: { slug: slugify(post.title) },
-      update: { ...post, slug: slugify(post.title) },
-      create: { ...post, slug: slugify(post.title) }
+    const { legacySlug, ...postData } = post;
+    const slug = slugify(post.title);
+    const existingPost = await prisma.post.findFirst({
+      where: { slug: { in: [legacySlug, slug] } }
     });
+
+    if (existingPost) {
+      await prisma.post.update({
+        where: { id: existingPost.id },
+        data: { ...postData, slug }
+      });
+    } else {
+      await prisma.post.create({
+        data: { ...postData, slug }
+      });
+    }
   }
 }
 

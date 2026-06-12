@@ -3,9 +3,12 @@ const crypto = require("crypto");
 const prisma = require("../config/db");
 const generateToken = require("../utils/generateToken");
 const { successResponse, errorResponse } = require("../utils/response");
-const { sendMail, buildPasswordResetEmail } = require("../utils/mailer");
+const { sendMail, buildOtpEmail } = require("../utils/mailer");
 
-const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+const OTP_TTL_MS = 10 * 60 * 1000;
+const MAX_OTP_ATTEMPTS = 5;
+const hashValue = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
+const createOtp = () => String(crypto.randomInt(100000, 1000000));
 
 const userSelect = {
   id: true,
@@ -19,32 +22,125 @@ const userSelect = {
   updatedAt: true
 };
 
+const saveAndSendOtp = async ({ email, name, purpose }) => {
+  const code = createOtp();
+  await prisma.otpCode.upsert({
+    where: { email_purpose: { email, purpose } },
+    update: {
+      codeHash: hashValue(code),
+      expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      attempts: 0
+    },
+    create: {
+      email,
+      purpose,
+      codeHash: hashValue(code),
+      expiresAt: new Date(Date.now() + OTP_TTL_MS)
+    }
+  });
+
+  const mail = buildOtpEmail({ name, code, purpose });
+  try {
+    const result = await sendMail({ to: email, ...mail });
+    return {
+      devOtp:
+        result?.skipped &&
+        process.env.NODE_ENV === "development" &&
+        process.env.EMAIL_DEV_MODE === "true"
+          ? code
+          : undefined
+    };
+  } catch (error) {
+    await prisma.otpCode.deleteMany({ where: { email, purpose } });
+    throw new Error(`Không thể gửi email OTP: ${error.message}`);
+  }
+};
+
+const verifyOtp = async ({ email, purpose, code }) => {
+  const record = await prisma.otpCode.findUnique({
+    where: { email_purpose: { email, purpose } }
+  });
+
+  if (!record) return { valid: false, message: "Bạn chưa yêu cầu mã OTP." };
+  if (record.expiresAt <= new Date()) {
+    await prisma.otpCode.delete({ where: { id: record.id } });
+    return { valid: false, message: "Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới." };
+  }
+  if (record.attempts >= MAX_OTP_ATTEMPTS) {
+    return { valid: false, message: "Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới." };
+  }
+  if (record.codeHash !== hashValue(code)) {
+    await prisma.otpCode.update({
+      where: { id: record.id },
+      data: { attempts: { increment: 1 } }
+    });
+    return { valid: false, message: "Mã OTP không chính xác." };
+  }
+
+  return { valid: true, record };
+};
+
+const requestRegistrationOtp = async (req, res, next) => {
+  try {
+    const { name, email } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (existingUser) {
+      return errorResponse(res, "Email đã được sử dụng.", 409);
+    }
+
+    const otpResult = await saveAndSendOtp({
+      email: normalizedEmail,
+      name: name.trim(),
+      purpose: "REGISTER"
+    });
+    return successResponse(
+      res,
+      otpResult.devOtp
+        ? "Đang ở chế độ phát triển: sử dụng mã OTP hiển thị bên dưới."
+        : "Mã OTP đăng ký đã được gửi đến email.",
+      otpResult.devOtp ? { devOtp: otpResult.devOtp } : null
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, otp } = req.body;
     const normalizedEmail = email.toLowerCase().trim();
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email: normalizedEmail }
-    });
-
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
-      return errorResponse(res, "Email da duoc su dung", 409);
+      return errorResponse(res, "Email đã được sử dụng.", 409);
+    }
+
+    const verification = await verifyOtp({
+      email: normalizedEmail,
+      purpose: "REGISTER",
+      code: otp
+    });
+    if (!verification.valid) {
+      return errorResponse(res, verification.message, 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        name: name.trim(),
-        email: normalizedEmail,
-        password: hashedPassword,
-        phone: phone || null,
-        role: "CUSTOMER"
-      },
-      select: userSelect
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          name: name.trim(),
+          email: normalizedEmail,
+          password: hashedPassword,
+          phone: phone?.trim() || null,
+          role: "CUSTOMER"
+        },
+        select: userSelect
+      });
+      await tx.otpCode.delete({ where: { id: verification.record.id } });
+      return createdUser;
     });
 
-    return successResponse(res, "Dang ky tai khoan thanh cong", { user }, 201);
+    return successResponse(res, "Đăng ký tài khoản thành công.", { user }, 201);
   } catch (error) {
     return next(error);
   }
@@ -54,58 +150,38 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = email.toLowerCase().trim();
-
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail }
-    });
-
-    if (!user) {
-      return errorResponse(res, "Email hoac mat khau khong dung", 401);
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return errorResponse(res, "Email hoặc mật khẩu không đúng.", 401);
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return errorResponse(res, "Email hoac mat khau khong dung", 401);
-    }
-
     if (!user.isActive) {
-      return errorResponse(res, "Tai khoan da bi khoa", 403);
+      return errorResponse(res, "Tài khoản đã bị khóa.", 403);
     }
 
     const token = generateToken(user);
     const { password: _password, ...safeUser } = user;
-
-    return successResponse(res, "Dang nhap thanh cong", {
-      token,
-      user: safeUser
-    });
+    return successResponse(res, "Đăng nhập thành công.", { token, user: safeUser });
   } catch (error) {
     return next(error);
   }
 };
 
-const getMe = async (req, res) => {
-  return successResponse(res, "Lay thong tin nguoi dung thanh cong", {
-    user: req.user
-  });
-};
+const getMe = async (req, res) =>
+  successResponse(res, "Lấy thông tin người dùng thành công.", { user: req.user });
 
 const updateProfile = async (req, res, next) => {
   try {
     const { name, phone, address } = req.body;
-
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {
         ...(name !== undefined ? { name: name.trim() } : {}),
-        ...(phone !== undefined ? { phone: phone || null } : {}),
+        ...(phone !== undefined ? { phone: phone?.trim() || null } : {}),
         ...(address !== undefined ? { address: address || null } : {})
       },
       select: userSelect
     });
-
-    return successResponse(res, "Cap nhat ho so thanh cong", { user });
+    return successResponse(res, "Cập nhật hồ sơ thành công.", { user });
   } catch (error) {
     return next(error);
   }
@@ -114,29 +190,20 @@ const updateProfile = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-    if (!user) {
-      return errorResponse(res, "Khong tim thay nguoi dung", 404);
+    if (!user) return errorResponse(res, "Không tìm thấy người dùng.", 404);
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+      return errorResponse(res, "Mật khẩu hiện tại không đúng.", 400);
+    }
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return errorResponse(res, "Mật khẩu mới phải khác mật khẩu hiện tại.", 400);
     }
 
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isPasswordValid) {
-      return errorResponse(res, "Mat khau hien tai khong dung", 400);
-    }
-
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
-    if (isSamePassword) {
-      return errorResponse(res, "Mat khau moi phai khac mat khau hien tai", 400);
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword }
+      data: { password: await bcrypt.hash(newPassword, 10) }
     });
-
-    return successResponse(res, "Doi mat khau thanh cong");
+    return successResponse(res, "Đổi mật khẩu thành công.");
   } catch (error) {
     return next(error);
   }
@@ -144,34 +211,22 @@ const changePassword = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
   try {
-    const email = (req.body.email || "").toLowerCase().trim();
+    const email = req.body.email.toLowerCase().trim();
     const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return errorResponse(res, "Email chưa được đăng ký.", 404);
+    if (!user.isActive) return errorResponse(res, "Tài khoản đang bị khóa.", 403);
 
-    // Luon tra ve thanh cong de tranh lo email co ton tai hay khong.
-    if (user && user.isActive) {
-      const rawToken = crypto.randomBytes(32).toString("hex");
-      const resetToken = hashToken(rawToken);
-      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 gio
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { resetToken, resetTokenExpiry }
-      });
-
-      const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-      const resetUrl = `${clientUrl}/reset-password?token=${rawToken}`;
-      const { subject, text, html } = buildPasswordResetEmail(user, resetUrl);
-
-      try {
-        await sendMail({ to: user.email, subject, text, html });
-      } catch (mailError) {
-        console.error("Gui email dat lai mat khau that bai:", mailError.message);
-      }
-    }
-
+    const otpResult = await saveAndSendOtp({
+      email,
+      name: user.name,
+      purpose: "RESET_PASSWORD"
+    });
     return successResponse(
       res,
-      "Neu email ton tai, lien ket dat lai mat khau da duoc gui"
+      otpResult.devOtp
+        ? "Đang ở chế độ phát triển: sử dụng mã OTP hiển thị bên dưới."
+        : "Mã OTP đặt lại mật khẩu đã được gửi đến email.",
+      otpResult.devOtp ? { devOtp: otpResult.devOtp } : null
     );
   } catch (error) {
     return next(error);
@@ -180,33 +235,37 @@ const forgotPassword = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
   try {
-    const { token, newPassword } = req.body;
-    const hashed = hashToken(token);
+    const { email, otp, newPassword } = req.body;
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user) return errorResponse(res, "Email chưa được đăng ký.", 404);
 
-    const user = await prisma.user.findFirst({
-      where: {
-        resetToken: hashed,
-        resetTokenExpiry: { gt: new Date() }
-      }
+    const verification = await verifyOtp({
+      email: normalizedEmail,
+      purpose: "RESET_PASSWORD",
+      code: otp
     });
-
-    if (!user) {
-      return errorResponse(res, "Lien ket khong hop le hoac da het han", 400);
+    if (!verification.valid) {
+      return errorResponse(res, verification.message, 400);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
-    });
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
+      }),
+      prisma.otpCode.delete({ where: { id: verification.record.id } })
+    ]);
 
-    return successResponse(res, "Dat lai mat khau thanh cong");
+    return successResponse(res, "Đặt lại mật khẩu thành công.");
   } catch (error) {
     return next(error);
   }
 };
 
 module.exports = {
+  requestRegistrationOtp,
   register,
   login,
   getMe,

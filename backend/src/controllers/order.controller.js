@@ -190,6 +190,10 @@ const updateOrderStatus = async (req, res, next) => {
       return errorResponse(res, "Khong tim thay don hang", 404);
     }
 
+    if (existingOrder.status === "CANCELLED" && status !== "CANCELLED") {
+      return errorResponse(res, "Đơn hàng đã hủy không thể chuyển sang trạng thái khác.", 400);
+    }
+
     const order = await prisma.order.update({
       where: { id },
       data: { status },

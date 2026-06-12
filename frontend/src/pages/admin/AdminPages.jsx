@@ -250,12 +250,79 @@ const PAYMENT_LABELS = {
   REFUNDED: 'Đã hoàn tiền',
 };
 
+function OrderDetailModal({ order, onClose }) {
+  if (!order) return null;
+
+  return (
+    <div className="admin-modal-overlay" onClick={onClose}>
+      <div className="admin-modal admin-order-detail-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="admin-modal__header">
+          <div>
+            <h3>Chi tiết đơn #{order.id.slice(-8).toUpperCase()}</h3>
+            <p className="admin-modal__subtitle">{formatDate(order.createdAt)}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Đóng">×</button>
+        </div>
+
+        <div className="admin-order-detail-grid">
+          <section>
+            <span>Khách hàng</span>
+            <strong>{order.user?.name || order.shippingName}</strong>
+            {order.user?.email && <p>{order.user.email}</p>}
+          </section>
+          <section>
+            <span>Người nhận</span>
+            <strong>{order.shippingName}</strong>
+            <p>{order.shippingPhone}</p>
+          </section>
+          <section className="admin-order-detail-address">
+            <span>Địa chỉ giao hàng</span>
+            <strong>{order.shippingAddress}</strong>
+          </section>
+          <section>
+            <span>Thanh toán</span>
+            <strong>{order.paymentMethod}</strong>
+            <p>{PAYMENT_LABELS[order.paymentStatus] || order.paymentStatus}</p>
+          </section>
+          <section>
+            <span>Trạng thái đơn hàng</span>
+            <span className={`admin-order-status ${order.status.toLowerCase()}`}>
+              {STATUS_LABELS[order.status]}
+            </span>
+          </section>
+        </div>
+
+        <div className="admin-order-detail-items">
+          <h4>Sản phẩm</h4>
+          {order.items.map((item) => (
+            <div className="admin-order-detail-item" key={item.id}>
+              <div>
+                <strong>{item.productName}</strong>
+                {(item.size || item.color) && (
+                  <span>{[item.size, item.color].filter(Boolean).join(' · ')}</span>
+                )}
+              </div>
+              <span>{item.quantity} × {formatPrice(item.price)}</span>
+              <strong>{formatPrice(Number(item.price) * item.quantity)}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="admin-order-detail-total">
+          <span>Tổng cộng</span>
+          <strong>{formatPrice(order.totalAmount)}</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [updating, setUpdating] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [detailTarget, setDetailTarget] = useState(null);
   const [updateError, setUpdateError] = useState('');
 
   const loadOrders = async () => {
@@ -329,6 +396,8 @@ export function AdminOrdersPage() {
         />
       )}
 
+      <OrderDetailModal order={detailTarget} onClose={() => setDetailTarget(null)} />
+
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>
       ) : (
@@ -337,7 +406,7 @@ export function AdminOrdersPage() {
             <thead>
               <tr>
                 <th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th>Tổng tiền</th>
-                <th>Trạng thái thanh toán</th><th>Trạng thái đơn hàng</th><th>Cập nhật</th>
+                <th>Trạng thái thanh toán</th><th>Trạng thái đơn hàng</th><th>Cập nhật</th><th>Chi tiết</th>
               </tr>
             </thead>
             <tbody>
@@ -364,13 +433,19 @@ export function AdminOrdersPage() {
                     <select
                       className="form-select admin-status-select"
                       value={order.status}
-                      disabled={updating === order.id}
+                      disabled={updating === order.id || order.status === 'CANCELLED'}
+                      title={order.status === 'CANCELLED' ? 'Đơn đã hủy không thể đổi trạng thái' : ''}
                       onChange={(event) => handleStatusChange(order, event.target.value)}
                     >
                       {ORDER_STATUSES.map((status) => (
                         <option key={status} value={status}>{STATUS_LABELS[status]}</option>
                       ))}
                     </select>
+                  </td>
+                  <td>
+                    <button className="btn btn-outline btn-sm" onClick={() => setDetailTarget(order)}>
+                      Xem chi tiết
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -394,6 +469,7 @@ export function AdminUsersPage() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState('');
+  const [orderDetail, setOrderDetail] = useState(null);
 
   const loadUsers = async (searchValue = search, statusValue = statusFilter) => {
     setLoading(true);
@@ -505,7 +581,12 @@ export function AdminUsersPage() {
             ) : (
               <div className="admin-history-list">
                 {history.map((order) => (
-                  <article className="admin-history-item" key={order.id}>
+                  <button
+                    type="button"
+                    className="admin-history-item"
+                    key={order.id}
+                    onClick={() => setOrderDetail(order)}
+                  >
                     <div>
                       <strong>#{order.id.slice(-8).toUpperCase()}</strong>
                       <span>{formatDate(order.createdAt)} · {order.items.length} sản phẩm</span>
@@ -524,13 +605,16 @@ export function AdminUsersPage() {
                         </span>
                       ))}
                     </div>
-                  </article>
+                    <span className="admin-history-item__view">Xem chi tiết →</span>
+                  </button>
                 ))}
               </div>
             )}
           </div>
         </div>
       )}
+
+      <OrderDetailModal order={orderDetail} onClose={() => setOrderDetail(null)} />
 
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>

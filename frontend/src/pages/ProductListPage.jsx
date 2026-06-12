@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { productService, categoryService } from '../services/product.service';
 import ProductCard from '../components/product/ProductCard';
 import ProductCardSkeleton from '../components/product/ProductCardSkeleton';
+import SizeGuideModal from '../components/product/SizeGuideModal';
 import './ProductListPage.css';
 
 const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -23,6 +24,7 @@ export default function ProductListPage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   const currentCategory = searchParams.get('category') || '';
   const currentSearch = searchParams.get('search') || '';
@@ -33,6 +35,7 @@ export default function ProductListPage() {
   const currentSize = searchParams.get('size') || '';
   const currentColor = searchParams.get('color') || '';
   const [searchInput, setSearchInput] = useState(currentSearch);
+  const selectedCategory = categories.find(category => category.slug === currentCategory);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -83,6 +86,18 @@ export default function ProductListPage() {
 
   return (
     <div className="product-list-page">
+      <nav className="plp-breadcrumb container" aria-label="Breadcrumb">
+        <Link to="/">Trang chủ</Link>
+        <span>/</span>
+        <Link to="/products">Bộ sưu tập</Link>
+        {selectedCategory && (
+          <>
+            <span>/</span>
+            <span className="plp-breadcrumb__current">{selectedCategory.name}</span>
+          </>
+        )}
+      </nav>
+
       {/* Header */}
       <div className="plp-header container">
         <div>
@@ -90,12 +105,28 @@ export default function ProductListPage() {
           <p className="plp-count">{totalProducts} sản phẩm</p>
         </div>
         <div className="plp-controls">
-          <button className="plp-filter-btn" onClick={() => setFilterOpen(!filterOpen)}>
+          <button
+            type="button"
+            className="plp-size-guide-btn"
+            onClick={() => setSizeGuideOpen(true)}
+          >
+            {selectedCategory
+              ? currentCategory === 'phu-kien'
+                ? 'Hướng dẫn chọn phụ kiện'
+                : `Bảng size ${selectedCategory.name}`
+              : 'Hướng dẫn chọn size'}
+          </button>
+          <button
+            type="button"
+            className="plp-mobile-filter-btn"
+            onClick={() => setFilterOpen(!filterOpen)}
+            aria-label="Mở bộ lọc"
+            title="Mở bộ lọc"
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/>
               <line x1="11" y1="18" x2="13" y2="18"/>
             </svg>
-            Bộ lọc
           </button>
           <select
             className="form-select plp-sort"
@@ -294,6 +325,13 @@ export default function ProductListPage() {
           )}
         </div>
       </div>
+
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        categorySlug={currentCategory}
+        categoryName={selectedCategory?.name}
+      />
     </div>
   );
 }

@@ -45,10 +45,27 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.size-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .size-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 0.88rem;
+}
+
+@media (max-width: 600px) {
+  .size-modal__box {
+    padding: var(--spacing-lg);
+  }
+
+  .size-modal__title {
+    padding-right: 28px;
+    font-size: 1.45rem;
+  }
 }
 
 .size-table th,

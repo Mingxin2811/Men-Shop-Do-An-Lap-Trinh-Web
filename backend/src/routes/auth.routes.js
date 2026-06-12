@@ -1,6 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const {
+  requestRegistrationOtp,
   register,
   login,
   getMe,
@@ -13,6 +14,28 @@ const protect = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
 
 const router = express.Router();
+const strongPassword = (field, label = "Mật khẩu") =>
+  body(field)
+    .isLength({ min: 8 })
+    .withMessage(`${label} phải có ít nhất 8 ký tự`)
+    .matches(/[A-Za-z]/)
+    .withMessage(`${label} phải có ít nhất một chữ cái`)
+    .matches(/\d/)
+    .withMessage(`${label} phải có ít nhất một chữ số`)
+    .matches(/[^A-Za-z0-9]/)
+    .withMessage(`${label} phải có ít nhất một ký tự đặc biệt`);
+
+router.post(
+  "/register/request-otp",
+  [
+    body("name").trim().notEmpty().withMessage("Tên là bắt buộc"),
+    body("email").isEmail().withMessage("Email không hợp lệ"),
+    strongPassword("password"),
+    body("phone").optional({ checkFalsy: true }).trim().isLength({ max: 30 }).withMessage("Số điện thoại tối đa 30 ký tự")
+  ],
+  validate,
+  requestRegistrationOtp
+);
 
 /**
  * @swagger
@@ -63,10 +86,9 @@ router.post(
   [
     body("name").trim().notEmpty().withMessage("Ten la bat buoc"),
     body("email").isEmail().withMessage("Email khong hop le"),
-    body("password")
-      .isLength({ min: 8 })
-      .withMessage("Mat khau phai co it nhat 8 ky tu"),
-    body("phone").optional({ checkFalsy: true }).isMobilePhone("vi-VN").withMessage("So dien thoai khong hop le")
+    strongPassword("password"),
+    body("phone").optional({ checkFalsy: true }).trim().isLength({ max: 30 }).withMessage("Số điện thoại tối đa 30 ký tự"),
+    body("otp").matches(/^\d{6}$/).withMessage("Mã OTP phải gồm 6 chữ số")
   ],
   validate,
   register
@@ -209,7 +231,7 @@ router.put(
   protect,
   [
     body("currentPassword").notEmpty().withMessage("Mat khau hien tai la bat buoc"),
-    body("newPassword").isLength({ min: 8 }).withMessage("Mat khau moi phai co it nhat 8 ky tu")
+    strongPassword("newPassword", "Mật khẩu mới")
   ],
   validate,
   changePassword
@@ -225,8 +247,9 @@ router.post(
 router.post(
   "/reset-password",
   [
-    body("token").notEmpty().withMessage("Thieu token"),
-    body("newPassword").isLength({ min: 8 }).withMessage("Mat khau moi phai co it nhat 8 ky tu")
+    body("email").isEmail().withMessage("Email không hợp lệ"),
+    body("otp").matches(/^\d{6}$/).withMessage("Mã OTP phải gồm 6 chữ số"),
+    strongPassword("newPassword", "Mật khẩu mới")
   ],
   validate,
   resetPassword

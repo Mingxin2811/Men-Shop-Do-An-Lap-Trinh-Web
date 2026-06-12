@@ -193,7 +193,9 @@ export default function ProductDetailPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M3 7h18M3 12h18M3 17h18" /><path d="M7 5v4M12 5v6M17 5v4" />
                   </svg>
-                  Hướng dẫn chọn size
+                  {product.category?.name
+                    ? `Bảng size ${product.category.name}`
+                    : 'Hướng dẫn chọn size'}
                 </button>
               </div>
               <div className="pdp-size-grid">
@@ -317,7 +319,12 @@ export default function ProductDetailPage() {
       <RecentlyViewedSection excludeId={product.id} />
 
       {/* Modal bảng size */}
-      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        categorySlug={product.category?.slug}
+        categoryName={product.category?.name}
+      />
     </div>
   );
 }

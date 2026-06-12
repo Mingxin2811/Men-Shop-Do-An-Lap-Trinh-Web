@@ -5,12 +5,14 @@ let transporter;
 // Khoi tao transporter tu bien moi truong SMTP (neu co).
 const getTransporter = () => {
   if (transporter !== undefined) return transporter;
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS } = process.env;
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    const port = Number(SMTP_PORT) || 587;
     transporter = nodemailer.createTransport({
       host: SMTP_HOST,
-      port: Number(SMTP_PORT) || 587,
-      secure: Number(SMTP_PORT) === 465,
+      port,
+      secure: SMTP_SECURE === "true" || port === 465,
+      requireTLS: port === 587,
       auth: { user: SMTP_USER, pass: SMTP_PASS }
     });
   } else {
@@ -21,20 +23,41 @@ const getTransporter = () => {
 
 // Gui email. Neu chua cau hinh SMTP -> log ra console (che do dev), khong loi.
 const sendMail = async ({ to, subject, html, text }) => {
-  const from = process.env.MAIL_FROM || "Men's Shop <no-reply@menshop.vn>";
-  const t = getTransporter();
+  const senderName = process.env.MAIL_FROM || "Men's Shop";
+  const from = process.env.SMTP_USER
+    ? `${senderName} <${process.env.SMTP_USER}>`
+    : senderName;
 
-  if (!t) {
-    console.log("──────────── [EMAIL - DEV MODE] ────────────");
-    console.log("SMTP chua cau hinh, chi log noi dung email:");
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.EMAIL_DEV_MODE === "true"
+  ) {
+    console.log("------------ [EMAIL - DEV MODE] ------------");
     console.log("To:", to);
     console.log("Subject:", subject);
     console.log("Body:", text || (html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
-    console.log("─────────────────────────────────────────────");
+    console.log("--------------------------------------------");
     return { skipped: true };
   }
 
+  const t = getTransporter();
+
+  if (!t) {
+    throw new Error(
+      "SMTP chưa được cấu hình. Hãy điền SMTP_USER và SMTP_PASS trong backend/.env."
+    );
+  }
+
   return t.sendMail({ from, to, subject, html, text });
+};
+
+const verifyMailConnection = async () => {
+  const t = getTransporter();
+  if (!t) {
+    throw new Error("Thiếu SMTP_USER hoặc SMTP_PASS trong backend/.env.");
+  }
+  await t.verify();
+  return true;
 };
 
 const formatVnd = (n) =>
@@ -105,4 +128,34 @@ const buildPasswordResetEmail = (user, resetUrl) => {
   return { subject, text, html };
 };
 
-module.exports = { sendMail, buildOrderConfirmationEmail, buildPasswordResetEmail };
+const buildOtpEmail = ({ name, code, purpose }) => {
+  const isRegistration = purpose === "REGISTER";
+  const action = isRegistration ? "đăng ký tài khoản" : "đặt lại mật khẩu";
+  const subject = `Mã OTP ${action} - Men's Shop`;
+  const text =
+    `Xin chào ${name || "bạn"},\n\n` +
+    `Mã OTP để ${action} là: ${code}\n` +
+    "Mã có hiệu lực trong 10 phút và chỉ được sử dụng một lần.\n\n" +
+    "Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.";
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;">
+    <h2 style="font-weight:500;">Xác thực ${action}</h2>
+    <p>Xin chào <strong>${name || "bạn"}</strong>,</p>
+    <p>Mã OTP của bạn là:</p>
+    <div style="margin:24px 0;padding:18px;background:#f4f2ef;text-align:center;font-size:30px;font-weight:700;letter-spacing:10px;">
+      ${code}
+    </div>
+    <p style="color:#666;">Mã có hiệu lực trong 10 phút và chỉ được sử dụng một lần.</p>
+    <p style="color:#888;font-size:13px;">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>
+  </div>`;
+
+  return { subject, text, html };
+};
+
+module.exports = {
+  sendMail,
+  buildOrderConfirmationEmail,
+  buildPasswordResetEmail,
+  buildOtpEmail,
+  verifyMailConnection
+};

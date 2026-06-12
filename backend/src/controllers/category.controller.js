@@ -96,7 +96,7 @@ const deleteCategory = async (req, res, next) => {
 
     const productCount = await prisma.product.count({ where: { categoryId: id } });
     if (productCount > 0) {
-      return errorResponse(res, "Khong the xoa danh muc dang co san pham", 400);
+      return errorResponse(res, "Không thể xóa danh mục đang có sản phẩm.", 400);
     }
 
     await prisma.category.delete({ where: { id } });

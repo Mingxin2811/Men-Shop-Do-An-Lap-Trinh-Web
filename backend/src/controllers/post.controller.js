@@ -41,7 +41,23 @@ const getPostBySlug = async (req, res, next) => {
 // GET /api/posts/admin/all - tat ca bai viet (admin)
 const getAdminPosts = async (req, res, next) => {
   try {
-    const posts = await prisma.post.findMany({ orderBy: { createdAt: "desc" } });
+    const { status, createdDate } = req.query;
+    const where = {};
+
+    if (status === "published") where.published = true;
+    if (status === "draft") where.published = false;
+    if (createdDate) {
+      const start = new Date(`${createdDate}T00:00:00.000`);
+      const end = new Date(`${createdDate}T23:59:59.999`);
+      if (!Number.isNaN(start.getTime())) {
+        where.createdAt = { gte: start, lte: end };
+      }
+    }
+
+    const posts = await prisma.post.findMany({
+      where,
+      orderBy: { createdAt: "desc" }
+    });
     return successResponse(res, "Lay danh sach bai viet quan tri thanh cong", posts);
   } catch (error) {
     return next(error);
@@ -55,7 +71,7 @@ const createPost = async (req, res, next) => {
 
     const existing = await prisma.post.findUnique({ where: { slug } });
     if (existing) {
-      return errorResponse(res, "Tieu de bai viet da ton tai", 409);
+      return errorResponse(res, "Tiêu đề bài viết đã tồn tại.", 409);
     }
 
     const post = await prisma.post.create({
@@ -68,7 +84,7 @@ const createPost = async (req, res, next) => {
         ...(published !== undefined ? { published: Boolean(published) } : {})
       }
     });
-    return successResponse(res, "Tao bai viet thanh cong", post, 201);
+    return successResponse(res, "Tạo bài viết thành công.", post, 201);
   } catch (error) {
     return next(error);
   }
@@ -81,7 +97,7 @@ const updatePost = async (req, res, next) => {
 
     const existing = await prisma.post.findUnique({ where: { id } });
     if (!existing) {
-      return errorResponse(res, "Khong tim thay bai viet", 404);
+      return errorResponse(res, "Không tìm thấy bài viết.", 404);
     }
 
     const data = {};
@@ -89,7 +105,7 @@ const updatePost = async (req, res, next) => {
       const slug = slugify(title);
       const dup = await prisma.post.findFirst({ where: { slug, NOT: { id } } });
       if (dup) {
-        return errorResponse(res, "Tieu de bai viet da ton tai", 409);
+        return errorResponse(res, "Tiêu đề bài viết đã tồn tại.", 409);
       }
       data.title = title.trim();
       data.slug = slug;
@@ -100,7 +116,7 @@ const updatePost = async (req, res, next) => {
     if (published !== undefined) data.published = Boolean(published);
 
     const post = await prisma.post.update({ where: { id }, data });
-    return successResponse(res, "Cap nhat bai viet thanh cong", post);
+    return successResponse(res, "Cập nhật bài viết thành công.", post);
   } catch (error) {
     return next(error);
   }
@@ -111,10 +127,10 @@ const deletePost = async (req, res, next) => {
     const { id } = req.params;
     const existing = await prisma.post.findUnique({ where: { id } });
     if (!existing) {
-      return errorResponse(res, "Khong tim thay bai viet", 404);
+      return errorResponse(res, "Không tìm thấy bài viết.", 404);
     }
     await prisma.post.delete({ where: { id } });
-    return successResponse(res, "Xoa bai viet thanh cong");
+    return successResponse(res, "Xóa bài viết thành công.");
   } catch (error) {
     return next(error);
   }

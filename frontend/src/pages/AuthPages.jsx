@@ -1,58 +1,64 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/auth.service';
 import './AuthPages.css';
+
+const loginImage = 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1000&auto=format';
+const registerImage = 'https://images.unsplash.com/photo-1610652492500-ded49ceeb378?w=1000&auto=format';
+const isStrongPassword = (password) =>
+  password.length >= 8 &&
+  /[A-Za-z]/.test(password) &&
+  /\d/.test(password) &&
+  /[^A-Za-z0-9]/.test(password);
+
+function AuthBanner({ image, alt, children }) {
+  return (
+    <div className="auth-banner">
+      <img src={image} alt={alt} />
+      <div className="auth-banner__overlay">
+        <div className="auth-banner__text"><h2>{children}</h2></div>
+      </div>
+    </div>
+  );
+}
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/';
-
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
     try {
       setLoading(true);
       const user = await login(form.email, form.password);
       navigate(user.role === 'ADMIN' ? '/admin' : from, { replace: true });
-    } catch (e) {
-      setError(e.response?.data?.message || 'Đăng nhập thất bại.');
-    } finally { setLoading(false); }
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Đăng nhập thất bại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="auth-page">
-      <div className="auth-banner">
-        <img
-          src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1000&auto=format"
-          alt="Thời trang nam công sở"
-        />
-        <div className="auth-banner__overlay">
-          <div className="auth-banner__text">
-            <h2>Phong cách<br />bắt đầu từ đây</h2>
-          </div>
-        </div>
-      </div>
-
+      <AuthBanner image={loginImage} alt="Thời trang nam công sở">
+        Phong cách<br />bắt đầu từ đây
+      </AuthBanner>
       <div className="auth-form-wrap">
         <div className="auth-form">
-          <div className="auth-logo">
-            <Link to="/">
-              <span>MEN'S SHOP</span>
-            </Link>
-          </div>
-
+          <div className="auth-logo"><Link to="/"><span>MEN&apos;S SHOP</span></Link></div>
           <h1>Đăng nhập</h1>
           <p className="auth-subtitle">Chào mừng trở lại</p>
 
-          {location.state?.reset && <div className="alert alert-success">Đặt lại mật khẩu thành công! Vui lòng đăng nhập.</div>}
-          {location.state?.registered && <div className="alert alert-success">Đăng ký thành công! Vui lòng đăng nhập.</div>}
+          {location.state?.reset && <div className="alert alert-success">Đặt lại mật khẩu thành công. Vui lòng đăng nhập.</div>}
+          {location.state?.registered && <div className="alert alert-success">Đăng ký thành công. Vui lòng đăng nhập.</div>}
           {error && <div className="alert alert-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
@@ -62,7 +68,7 @@ export function LoginPage() {
                 type="email"
                 className="form-input"
                 value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                 placeholder="email@example.com"
                 required
               />
@@ -73,24 +79,17 @@ export function LoginPage() {
                 type="password"
                 className="form-input"
                 value={form.password}
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
                 placeholder="••••••••"
                 required
               />
             </div>
-
             <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
               {loading ? <span className="spinner" /> : 'Đăng nhập'}
             </button>
           </form>
-
-          <p className="auth-forgot">
-            <Link to="/forgot-password">Quên mật khẩu?</Link>
-          </p>
-
-          <p className="auth-switch">
-            Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
-          </p>
+          <p className="auth-forgot"><Link to="/forgot-password">Quên mật khẩu?</Link></p>
+          <p className="auth-switch">Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link></p>
         </div>
       </div>
     </div>
@@ -100,59 +99,99 @@ export function LoginPage() {
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', otp: '' });
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (form.password.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự.'); return;
+  const validatePassword = () => {
+    if (!isStrongPassword(form.password)) {
+      setError('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ cái, chữ số và ký tự đặc biệt.');
+      return false;
     }
+    return true;
+  };
+
+  const requestOtp = async () => {
+    setError('');
+    setNotice('');
+    if (!form.name.trim()) {
+      setError('Vui lòng nhập họ và tên.');
+      return;
+    }
+    if (!validatePassword()) return;
+
+    try {
+      setLoading(true);
+      const response = await authService.requestRegistrationOtp({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        phone: form.phone,
+      });
+      setOtpSent(true);
+      const devOtp = response.data.data?.devOtp;
+      setNotice(
+        devOtp
+          ? `${response.data.message} Mã OTP: ${devOtp}`
+          : response.data.message || 'Mã OTP đã được gửi đến email.'
+      );
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Không thể gửi mã OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    if (!otpSent) {
+      await requestOtp();
+      return;
+    }
+    if (!/^\d{6}$/.test(form.otp)) {
+      setError('Mã OTP phải gồm đúng 6 chữ số.');
+      return;
+    }
+    if (!validatePassword()) return;
+
     try {
       setLoading(true);
       await register(form);
       navigate('/login', { state: { registered: true } });
-    } catch (e) {
-      setError(e.response?.data?.message || 'Đăng ký thất bại.');
-    } finally { setLoading(false); }
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Đăng ký thất bại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="auth-page">
-      <div className="auth-banner">
-        <img
-          src="https://images.unsplash.com/photo-1610652492500-ded49ceeb378?w=1000&auto=format"
-          alt="Phong cách thời trang nam hiện đại"
-        />
-        <div className="auth-banner__overlay">
-          <div className="auth-banner__text">
-            <h2>Gia nhập<br />cộng đồng</h2>
-          </div>
-        </div>
-      </div>
-
+      <AuthBanner image={registerImage} alt="Phong cách thời trang nam hiện đại">
+        Gia nhập<br />cộng đồng
+      </AuthBanner>
       <div className="auth-form-wrap">
         <div className="auth-form">
-          <div className="auth-logo">
-            <Link to="/"><span>MEN'S SHOP</span></Link>
-          </div>
-
+          <div className="auth-logo"><Link to="/"><span>MEN&apos;S SHOP</span></Link></div>
           <h1>Đăng ký</h1>
-          <p className="auth-subtitle">Tạo tài khoản mới</p>
+          <p className="auth-subtitle">
+            {otpSent ? `Nhập mã OTP đã gửi đến ${form.email}` : 'Tạo tài khoản mới'}
+          </p>
 
+          {notice && <div className="alert alert-success">{notice}</div>}
           {error && <div className="alert alert-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Họ và tên *</label>
               <input
-                type="text"
                 className="form-input"
                 value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Nguyễn Văn A"
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                disabled={otpSent}
                 required
               />
             </div>
@@ -162,8 +201,8 @@ export function RegisterPage() {
                 type="email"
                 className="form-input"
                 value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="email@example.com"
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                disabled={otpSent}
                 required
               />
             </div>
@@ -173,8 +212,9 @@ export function RegisterPage() {
                 type="tel"
                 className="form-input"
                 value={form.phone}
-                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                placeholder="0901 234 567"
+                onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+                placeholder="Có thể dùng mọi mã vùng quốc gia"
+                disabled={otpSent}
               />
             </div>
             <div className="form-group">
@@ -183,20 +223,51 @@ export function RegisterPage() {
                 type="password"
                 className="form-input"
                 value={form.password}
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                placeholder="Ít nhất 8 ký tự"
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                disabled={otpSent}
                 required
               />
+              <p className="auth-field-hint">Ít nhất 8 ký tự, có chữ cái, chữ số và ký tự đặc biệt.</p>
             </div>
-
+            {otpSent && (
+              <div className="form-group">
+                <label className="form-label">Mã OTP *</label>
+                <input
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="form-input auth-otp-input"
+                  value={form.otp}
+                  onChange={(event) => setForm((current) => ({
+                    ...current,
+                    otp: event.target.value.replace(/\D/g, ''),
+                  }))}
+                  placeholder="000000"
+                  autoFocus
+                  required
+                />
+              </div>
+            )}
             <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
-              {loading ? <span className="spinner" /> : 'Tạo tài khoản'}
+              {loading ? <span className="spinner" /> : otpSent ? 'Xác nhận và đăng ký' : 'Gửi mã OTP'}
             </button>
+            {otpSent && (
+              <div className="auth-secondary-actions">
+                <button type="button" onClick={requestOtp} disabled={loading}>Gửi lại OTP</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setForm((current) => ({ ...current, otp: '' }));
+                    setNotice('');
+                    setError('');
+                  }}
+                >
+                  Sửa thông tin
+                </button>
+              </div>
+            )}
           </form>
-
-          <p className="auth-switch">
-            Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
-          </p>
+          <p className="auth-switch">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
         </div>
       </div>
     </div>
@@ -204,67 +275,138 @@ export function RegisterPage() {
 }
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: '', otp: '', password: '', confirm: '' });
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const requestOtp = async (event) => {
+    event?.preventDefault();
     setError('');
+    setNotice('');
     try {
       setLoading(true);
-      await authService.forgotPassword(email.trim());
-      setSent(true);
-    } catch (e) {
-      setError(e.response?.data?.message || 'Có lỗi xảy ra.');
-    } finally { setLoading(false); }
+      const response = await authService.forgotPassword(form.email.trim());
+      setOtpSent(true);
+      const devOtp = response.data.data?.devOtp;
+      setNotice(
+        devOtp
+          ? `${response.data.message} Mã OTP: ${devOtp}`
+          : response.data.message || 'Mã OTP đã được gửi đến email.'
+      );
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Không thể gửi mã OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (event) => {
+    event.preventDefault();
+    setError('');
+    if (!/^\d{6}$/.test(form.otp)) {
+      setError('Mã OTP phải gồm đúng 6 chữ số.');
+      return;
+    }
+    if (!isStrongPassword(form.password)) {
+      setError('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ cái, chữ số và ký tự đặc biệt.');
+      return;
+    }
+    if (form.password !== form.confirm) {
+      setError('Xác nhận mật khẩu không khớp.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await authService.resetPassword(form.email, form.otp, form.password);
+      navigate('/login', { state: { reset: true } });
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Không thể đặt lại mật khẩu.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="auth-page">
-      <div className="auth-banner">
-        <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1000&auto=format" alt="Thời trang nam" />
-        <div className="auth-banner__overlay">
-          <div className="auth-banner__text"><h2>Khôi phục<br />tài khoản</h2></div>
-        </div>
-      </div>
-
+      <AuthBanner image={loginImage} alt="Thời trang nam">
+        Khôi phục<br />tài khoản
+      </AuthBanner>
       <div className="auth-form-wrap">
         <div className="auth-form">
-          <div className="auth-logo"><Link to="/"><span>MEN'S SHOP</span></Link></div>
+          <div className="auth-logo"><Link to="/"><span>MEN&apos;S SHOP</span></Link></div>
           <h1>Quên mật khẩu</h1>
-          <p className="auth-subtitle">Nhập email để nhận liên kết đặt lại mật khẩu</p>
+          <p className="auth-subtitle">
+            {otpSent ? 'Nhập OTP và mật khẩu mới' : 'Nhập email đã đăng ký để nhận mã OTP'}
+          </p>
+          {notice && <div className="alert alert-success">{notice}</div>}
+          {error && <div className="alert alert-error">{error}</div>}
 
-          {sent ? (
-            <>
-              <div className="alert alert-success">
-                Nếu email tồn tại trong hệ thống, chúng tôi đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.
-              </div>
-              <p className="auth-switch"><Link to="/login">← Về đăng nhập</Link></p>
-            </>
-          ) : (
-            <>
-              {error && <div className="alert alert-error">{error}</div>}
-              <form onSubmit={handleSubmit}>
+          <form onSubmit={otpSent ? resetPassword : requestOtp}>
+            <div className="form-group">
+              <label className="form-label">Email đăng ký</label>
+              <input
+                type="email"
+                className="form-input"
+                value={form.email}
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                disabled={otpSent}
+                required
+              />
+            </div>
+            {otpSent && (
+              <>
                 <div className="form-group">
-                  <label className="form-label">Email</label>
+                  <label className="form-label">Mã OTP</label>
                   <input
-                    type="email"
-                    className="form-input"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="email@example.com"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="form-input auth-otp-input"
+                    value={form.otp}
+                    onChange={(event) => setForm((current) => ({
+                      ...current,
+                      otp: event.target.value.replace(/\D/g, ''),
+                    }))}
                     required
                   />
                 </div>
-                <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
-                  {loading ? <span className="spinner" /> : 'Gửi liên kết đặt lại'}
-                </button>
-              </form>
-              <p className="auth-switch"><Link to="/login">← Về đăng nhập</Link></p>
-            </>
-          )}
+                <div className="form-group">
+                  <label className="form-label">Mật khẩu mới</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={form.password}
+                    onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                    required
+                  />
+                  <p className="auth-field-hint">Ít nhất 8 ký tự, có chữ cái, chữ số và ký tự đặc biệt.</p>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Nhập lại mật khẩu mới</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={form.confirm}
+                    onChange={(event) => setForm((current) => ({ ...current, confirm: event.target.value }))}
+                    required
+                  />
+                </div>
+              </>
+            )}
+            <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
+              {loading ? <span className="spinner" /> : otpSent ? 'Đổi mật khẩu' : 'Gửi mã OTP'}
+            </button>
+            {otpSent && (
+              <div className="auth-secondary-actions">
+                <button type="button" onClick={requestOtp} disabled={loading}>Gửi lại OTP</button>
+                <button type="button" onClick={() => setOtpSent(false)}>Đổi email</button>
+              </div>
+            )}
+          </form>
+          <p className="auth-switch"><Link to="/login">← Về đăng nhập</Link></p>
         </div>
       </div>
     </div>
@@ -272,78 +414,17 @@ export function ForgotPasswordPage() {
 }
 
 export function ResetPasswordPage() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') || '';
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ password: '', confirm: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (form.password.length < 8) { setError('Mật khẩu phải có ít nhất 8 ký tự.'); return; }
-    if (form.password !== form.confirm) { setError('Xác nhận mật khẩu không khớp.'); return; }
-    try {
-      setLoading(true);
-      await authService.resetPassword(token, form.password);
-      navigate('/login', { state: { reset: true } });
-    } catch (e) {
-      setError(e.response?.data?.message || 'Liên kết không hợp lệ hoặc đã hết hạn.');
-    } finally { setLoading(false); }
-  };
-
   return (
     <div className="auth-page">
-      <div className="auth-banner">
-        <img src="https://images.unsplash.com/photo-1610652492500-ded49ceeb378?w=1000&auto=format" alt="Thời trang nam" />
-        <div className="auth-banner__overlay">
-          <div className="auth-banner__text"><h2>Đặt lại<br />mật khẩu</h2></div>
-        </div>
-      </div>
-
+      <AuthBanner image={registerImage} alt="Thời trang nam">
+        Bảo mật<br />tài khoản
+      </AuthBanner>
       <div className="auth-form-wrap">
-        <div className="auth-form">
-          <div className="auth-logo"><Link to="/"><span>MEN'S SHOP</span></Link></div>
+        <div className="auth-form text-center">
+          <div className="auth-logo"><Link to="/"><span>MEN&apos;S SHOP</span></Link></div>
           <h1>Đặt lại mật khẩu</h1>
-          <p className="auth-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
-
-          {!token ? (
-            <div className="alert alert-error">Liên kết không hợp lệ. Vui lòng yêu cầu đặt lại mật khẩu lại.</div>
-          ) : (
-            <>
-              {error && <div className="alert alert-error">{error}</div>}
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label className="form-label">Mật khẩu mới</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={form.password}
-                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                    placeholder="Ít nhất 8 ký tự"
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Xác nhận mật khẩu mới</label>
-                  <input
-                    type="password"
-                    className="form-input"
-                    value={form.confirm}
-                    onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
-                    autoComplete="new-password"
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
-                  {loading ? <span className="spinner" /> : 'Đặt lại mật khẩu'}
-                </button>
-              </form>
-            </>
-          )}
-          <p className="auth-switch"><Link to="/login">← Về đăng nhập</Link></p>
+          <p className="auth-subtitle">Hệ thống hiện sử dụng mã OTP gửi trực tiếp đến email.</p>
+          <Link to="/forgot-password" className="btn btn-primary btn-lg w-full">Nhận mã OTP</Link>
         </div>
       </div>
     </div>

@@ -106,6 +106,37 @@
   text-decoration: underline;
 }
 
+.auth-field-hint {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.auth-otp-input {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.45em;
+  text-align: center;
+}
+
+.auth-secondary-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.auth-secondary-actions button {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-decoration: underline;
+}
+
+.auth-secondary-actions button:hover {
+  color: var(--black);
+}
+
 .auth-demo {
   margin-top: var(--spacing-xl);
   padding: var(--spacing-md);
