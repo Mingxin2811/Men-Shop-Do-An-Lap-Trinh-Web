@@ -107,7 +107,7 @@ export default function AdminBlogPage() {
   return (
     <div>
       <div className="admin-page-header admin-page-header--blog">
-        <h1>Blog</h1>
+        <h1>Blogs</h1>
         <div className="admin-blog-header-actions">
           <select
             className="form-select"

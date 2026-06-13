@@ -239,7 +239,7 @@ const STATUS_LABELS = {
   PENDING: 'Chờ xử lý',
   CONFIRMED: 'Đã xác nhận',
   SHIPPING: 'Đang giao',
-  COMPLETED: 'Hoàn thành',
+  COMPLETED: 'Hoàn tất',
   CANCELLED: 'Đã hủy',
 };
 const PAYMENT_LABELS = {

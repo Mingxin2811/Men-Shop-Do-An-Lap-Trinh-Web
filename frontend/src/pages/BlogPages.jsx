@@ -21,7 +21,7 @@ export function BlogListPage() {
   return (
     <div className="blog-page container">
       <div className="blog-head">
-        <p className="section__label">Blog</p>
+        <p className="blog-label">BLOGS</p>
         <h1 className="blog-title">Tin tức &amp; phối đồ</h1>
         <p className="blog-sub">Cập nhật xu hướng, mẹo phối đồ và câu chuyện thời trang nam.</p>
       </div>
@@ -75,16 +75,19 @@ export function BlogDetailPage() {
     return (
       <div className="blog-page container">
         <p className="blog-empty">Không tìm thấy bài viết.</p>
-        <Link to="/blog" className="btn btn-outline">← Về trang blog</Link>
+        <Link to="/blog" className="btn btn-outline">← Về trang Blogs</Link>
       </div>
     );
   }
 
   return (
     <article className="blog-detail container">
+      <div className="blog-detail__nav">
+        <Link to="/blog" className="blog-detail__back">← Quay lại Blogs</Link>
+      </div>
       <div className="blog-detail__head">
-        <Link to="/blog" className="blog-detail__back">← Blog</Link>
-        <span className="blog-card__date">{formatDate(post.createdAt)}</span>
+        <p className="blog-label">BLOGS</p>
+        <span className="blog-card__date blog-detail__date">{formatDate(post.createdAt)}</span>
         <h1 className="blog-detail__title">{post.title}</h1>
       </div>
       {post.coverImage && (

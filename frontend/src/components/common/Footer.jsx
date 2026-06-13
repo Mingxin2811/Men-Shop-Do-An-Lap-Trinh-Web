@@ -71,7 +71,7 @@ export default function Footer() {
               <li><Link to="/register">Đăng ký</Link></li>
               <li><Link to="/orders">Đơn hàng</Link></li>
               <li><Link to="/profile">Hồ sơ</Link></li>
-              <li><Link to="/blog">Blog</Link></li>
+              <li><Link to="/blog">Blogs</Link></li>
             </ul>
           </div>
 

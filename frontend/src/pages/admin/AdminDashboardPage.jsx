@@ -24,7 +24,7 @@ const STATUS_COLORS = {
 };
 const STATUS_LABELS = {
   PENDING: 'Chờ xử lý', CONFIRMED: 'Xác nhận', SHIPPING: 'Giao hàng',
-  COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy'
+  COMPLETED: 'Hoàn tất', CANCELLED: 'Đã hủy'
 };
 
 export default function AdminDashboardPage() {

@@ -17,6 +17,8 @@ export default function ProductReviews({ productId, onStatsChange }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [eligibility, setEligibility] = useState({ canReview: false, hasCompletedPurchase: false, hasReview: false });
+  const [eligibilityLoading, setEligibilityLoading] = useState(false);
 
   const load = useCallback(() => {
     reviewService.getReviews(productId)
@@ -29,6 +31,18 @@ export default function ProductReviews({ productId, onStatsChange }) {
   }, [productId, onStatsChange]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!user) {
+      setEligibility({ canReview: false, hasCompletedPurchase: false, hasReview: false });
+      return;
+    }
+    setEligibilityLoading(true);
+    reviewService.getEligibility(productId)
+      .then((res) => setEligibility(res.data.data))
+      .catch(() => setEligibility({ canReview: false, hasCompletedPurchase: false, hasReview: false }))
+      .finally(() => setEligibilityLoading(false));
+  }, [productId, user]);
 
   // Điền sẵn form nếu người dùng đã đánh giá sản phẩm này.
   useEffect(() => {
@@ -96,7 +110,7 @@ export default function ProductReviews({ productId, onStatsChange }) {
           </div>
 
           {/* Form viết đánh giá */}
-          {user ? (
+          {user && eligibility.canReview ? (
             <form className="reviews__form" onSubmit={submit}>
               <h4>{myReview ? 'Chỉnh sửa đánh giá của bạn' : 'Viết đánh giá'}</h4>
               <div className="reviews__form-stars">
@@ -120,10 +134,18 @@ export default function ProductReviews({ productId, onStatsChange }) {
                 )}
               </div>
             </form>
-          ) : (
+          ) : !user ? (
             <p className="reviews__login-hint">
               <Link to="/login">Đăng nhập</Link> để viết đánh giá cho sản phẩm này.
             </p>
+          ) : (
+            <div className="reviews__locked">
+              <strong>{eligibilityLoading ? 'Đang kiểm tra quyền đánh giá...' : 'Chưa thể đánh giá sản phẩm'}</strong>
+              {!eligibilityLoading && (
+                <p>Bạn có thể đánh giá sau khi đơn hàng chứa sản phẩm này chuyển sang trạng thái Hoàn tất.</p>
+              )}
+              <Link to="/orders">Xem đơn hàng của tôi →</Link>
+            </div>
           )}
 
           {/* Danh sách đánh giá */}

@@ -15,7 +15,7 @@ const STATUS_LABELS = {
   PENDING: { label: 'Chờ xử lý', color: '#d97706' },
   CONFIRMED: { label: 'Đã xác nhận', color: '#2563eb' },
   SHIPPING: { label: 'Đang giao', color: '#7c3aed' },
-  COMPLETED: { label: 'Hoàn thành', color: '#16a34a' },
+  COMPLETED: { label: 'Hoàn tất', color: '#16a34a' },
   CANCELLED: { label: 'Đã hủy', color: '#dc2626' },
 };
 
@@ -174,6 +174,11 @@ export function OrderDetailPage() {
                     <p className="order-item__variant">
                       {item.size} · {formatProductColor(item.color)}
                     </p>
+                  )}
+                  {order.status === 'COMPLETED' && (
+                    <Link to={`/products/${item.productId}#reviews`} className="order-item__review-link">
+                      Đánh giá sản phẩm
+                    </Link>
                   )}
                 </div>
                 <div className="order-item__right">

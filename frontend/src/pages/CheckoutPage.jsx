@@ -38,12 +38,12 @@ export default function CheckoutPage() {
       setLoading(true);
       const res = await orderService.createOrder(form);
       const order = res.data.data;
+      await fetchCart();
 
       if (form.paymentMethod === 'STRIPE') {
         const payRes = await paymentService.createCheckoutSession(order.id);
         window.location.href = payRes.data.data.checkoutUrl;
       } else {
-        await fetchCart();
         navigate(`/orders/${order.id}?success=true`);
       }
     } catch (e) {
@@ -113,8 +113,8 @@ export default function CheckoutPage() {
             <h3>Phương thức thanh toán</h3>
             <div className="payment-options">
               {[
-                { value: 'COD', label: 'Thanh toán khi nhận hàng', desc: 'Trả tiền mặt khi nhận hàng', icon: '💵' },
-                { value: 'STRIPE', label: 'Thanh toán online', desc: 'Thẻ tín dụng / Debit (Test mode)', icon: '💳' },
+                { value: 'COD', label: 'Thanh toán khi nhận hàng', desc: 'Thanh toán cho nhân viên giao hàng sau khi kiểm tra kiện hàng', icon: 'COD' },
+                { value: 'STRIPE', label: 'Thanh toán online', desc: 'Visa, Mastercard · Xác thực trên cổng thanh toán bảo mật', icon: 'CARD' },
               ].map(opt => (
                 <label key={opt.value} className={`payment-option${form.paymentMethod === opt.value ? ' active' : ''}`}>
                   <input
@@ -132,6 +132,12 @@ export default function CheckoutPage() {
                 </label>
               ))}
             </div>
+            {form.paymentMethod === 'STRIPE' && (
+              <div className="checkout-online-note">
+                <strong>Thanh toán an toàn</strong>
+                <span>Bạn sẽ được chuyển đến cổng thanh toán mô phỏng để xác nhận thông tin thẻ. Không sử dụng dữ liệu thẻ thật.</span>
+              </div>
+            )}
           </div>
 
           {error && <div className="alert alert-error">{error}</div>}

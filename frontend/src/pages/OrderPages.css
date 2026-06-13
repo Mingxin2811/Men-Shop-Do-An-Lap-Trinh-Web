@@ -137,6 +137,16 @@
   margin-top: 2px;
 }
 
+.order-item__review-link {
+  display: inline-block;
+  margin-top: 7px;
+  color: var(--accent-dark);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .order-item__right {
   display: flex;
   gap: var(--spacing-lg);
@@ -175,4 +185,46 @@
 .order-cancel__btn:hover:not(:disabled) {
   background: var(--red);
   color: var(--white);
+}
+
+@media (max-width: 600px) {
+  .order-card,
+  .order-detail .card {
+    padding: var(--spacing-md);
+  }
+
+  .order-card__header,
+  .order-detail .page-header,
+  .order-item,
+  .order-total {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .order-card__badges {
+    justify-content: flex-start;
+  }
+
+  .order-card__footer {
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .order-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .order-item__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 420px) {
+  .order-info-grid {
+    grid-template-columns: 1fr;
+  }
 }

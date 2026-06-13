@@ -2,6 +2,8 @@ const express = require("express");
 const { body } = require("express-validator");
 const {
   createCheckoutSession,
+  confirmPayment,
+  cancelPayment,
   handleMockPaymentGateway,
   handlePaymentSuccess,
   handlePaymentCancel,
@@ -18,6 +20,20 @@ router.post(
   [body("orderId").notEmpty().withMessage("orderId la bat buoc")],
   validate,
   createCheckoutSession
+);
+router.post(
+  "/confirm",
+  protect,
+  [body("orderId").notEmpty().withMessage("orderId la bat buoc")],
+  validate,
+  confirmPayment
+);
+router.post(
+  "/cancel-payment",
+  protect,
+  [body("orderId").notEmpty().withMessage("orderId la bat buoc")],
+  validate,
+  cancelPayment
 );
 router.get("/mock-gateway", handleMockPaymentGateway);
 router.get("/success", handlePaymentSuccess);

@@ -17,7 +17,7 @@ import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import { OrderHistoryPage, OrderDetailPage } from './pages/OrderPages';
-import { PaymentSuccessPage, PaymentCancelPage } from './pages/PaymentPages';
+import { PaymentCheckoutPage, PaymentSuccessPage, PaymentCancelPage } from './pages/PaymentPages';
 import { BlogListPage, BlogDetailPage } from './pages/BlogPages';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -54,6 +54,7 @@ export default function App() {
                     <Route element={<PrivateRoute />}>
                       <Route path="/cart" element={<CartPage />} />
                       <Route path="/checkout" element={<CheckoutPage />} />
+                      <Route path="/payment-checkout" element={<PaymentCheckoutPage />} />
                       <Route path="/profile" element={<ProfilePage />} />
                       <Route path="/orders" element={<OrderHistoryPage />} />
                       <Route path="/orders/:id" element={<OrderDetailPage />} />

@@ -10,6 +10,7 @@ const {
 } = require("../controllers/product.controller");
 const {
   getProductReviews,
+  getMyReviewEligibility,
   upsertReview,
   deleteMyReview
 } = require("../controllers/review.controller");
@@ -44,6 +45,7 @@ router.delete("/:id", protect, adminOnly, deleteProduct);
 
 // Danh gia san pham
 router.get("/:id/reviews", getProductReviews);
+router.get("/:id/reviews/eligibility", protect, getMyReviewEligibility);
 router.post(
   "/:id/reviews",
   protect,

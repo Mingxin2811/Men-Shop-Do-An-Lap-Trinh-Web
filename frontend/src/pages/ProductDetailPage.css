@@ -325,3 +325,29 @@
     gap: var(--spacing-xl);
   }
 }
+
+@media (max-width: 600px) {
+  .pdp-breadcrumb {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .pdp-option__header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .pdp-actions {
+    flex-wrap: wrap;
+  }
+
+  .pdp-actions .btn-primary {
+    min-width: 100%;
+  }
+
+  .pdp-related {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-xl);
+  }
+}

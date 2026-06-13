@@ -12,6 +12,11 @@ const isStrongPassword = (password) =>
   /\d/.test(password) &&
   /[^A-Za-z0-9]/.test(password);
 
+const DEMO_ACCOUNTS = [
+  { role: 'Quản trị viên', email: 'admin@menshop.com', password: 'Admin123456' },
+  { role: 'Khách hàng', email: 'customer@menshop.com', password: 'Customer123456' },
+];
+
 function AuthBanner({ image, alt, children }) {
   return (
     <div className="auth-banner">
@@ -89,6 +94,31 @@ export function LoginPage() {
             </button>
           </form>
           <p className="auth-forgot"><Link to="/forgot-password">Quên mật khẩu?</Link></p>
+
+          <div className="auth-demo">
+            <div className="auth-demo__header">
+              <strong>Tài khoản demo</strong>
+              <span>Nhấn để điền nhanh</span>
+            </div>
+            <div className="auth-demo__accounts">
+              {DEMO_ACCOUNTS.map(account => (
+                <button
+                  key={account.email}
+                  type="button"
+                  className="auth-demo__account"
+                  onClick={() => {
+                    setForm({ email: account.email, password: account.password });
+                    setError('');
+                  }}
+                >
+                  <span className="auth-demo__role">{account.role}</span>
+                  <span>{account.email}</span>
+                  <span>{account.password}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <p className="auth-switch">Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link></p>
         </div>
       </div>

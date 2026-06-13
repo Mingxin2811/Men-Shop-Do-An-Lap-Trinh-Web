@@ -39,6 +39,10 @@
   padding: 0;
 }
 
+*:where(p, h1, h2, h3, h4, h5, h6, a, span, td, th, label) {
+  overflow-wrap: anywhere;
+}
+
 html {
   scroll-behavior: smooth;
   font-size: 16px;
@@ -123,6 +127,7 @@ input, textarea, select {
   transition: var(--transition);
   cursor: pointer;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 .btn-primary {
@@ -279,6 +284,31 @@ input, textarea, select {
 .table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  html {
+    font-size: 15px;
+  }
+
+  .btn {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .btn-lg {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .page-header {
+    padding-top: var(--spacing-xl);
+  }
 }
 
 .table th {

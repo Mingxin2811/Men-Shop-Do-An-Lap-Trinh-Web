@@ -194,10 +194,42 @@ const updateOrderStatus = async (req, res, next) => {
       return errorResponse(res, "Đơn hàng đã hủy không thể chuyển sang trạng thái khác.", 400);
     }
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status },
-      include: { items: true, payment: true }
+    const order = await prisma.$transaction(async (tx) => {
+      const shouldMarkPaid = status === "COMPLETED" && existingOrder.paymentStatus !== "PAID";
+
+      const updatedOrder = await tx.order.update({
+        where: { id },
+        data: {
+          status,
+          ...(shouldMarkPaid ? { paymentStatus: "PAID" } : {})
+        },
+        include: { items: true, payment: true }
+      });
+
+      if (shouldMarkPaid) {
+        await tx.payment.upsert({
+          where: { orderId: id },
+          update: {
+            amount: existingOrder.totalAmount,
+            status: "PAID",
+            transactionId: existingOrder.paymentMethod === "COD"
+              ? `COD_${Date.now()}`
+              : undefined
+          },
+          create: {
+            orderId: id,
+            provider: existingOrder.paymentMethod === "COD" ? "COD" : "ONLINE",
+            transactionId: existingOrder.paymentMethod === "COD" ? `COD_${Date.now()}` : null,
+            amount: existingOrder.totalAmount,
+            status: "PAID"
+          }
+        });
+      }
+
+      return tx.order.findUnique({
+        where: { id },
+        include: { items: true, payment: true }
+      });
     });
 
     return successResponse(res, "Cap nhat trang thai don hang thanh cong", order);

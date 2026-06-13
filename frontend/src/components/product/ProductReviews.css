@@ -132,6 +132,30 @@
   text-decoration: underline;
 }
 
+.reviews__locked {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  border: 1px solid #ead8ae;
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.reviews__locked strong {
+  font-size: 0.9rem;
+}
+
+.reviews__locked p {
+  margin: 5px 0 9px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.reviews__locked a {
+  color: var(--black);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 /* Danh sách */
 .reviews__list {
   display: flex;
@@ -195,4 +219,35 @@
   font-size: 0.9rem;
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .reviews {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .reviews__summary {
+    align-items: stretch;
+    gap: var(--spacing-xl);
+  }
+
+  .reviews__avg {
+    align-items: flex-start;
+  }
+
+  .reviews__bars {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .reviews__form {
+    padding: var(--spacing-md);
+  }
+
+  .reviews__form-stars,
+  .reviews__form-actions,
+  .review-item__head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

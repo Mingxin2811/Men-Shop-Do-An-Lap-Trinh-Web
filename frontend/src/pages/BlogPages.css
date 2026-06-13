@@ -1,11 +1,24 @@
 .blog-page {
-  padding: calc(64px + var(--spacing-xl)) 0 var(--spacing-3xl);
+  padding-top: calc(64px + var(--spacing-xl));
+  padding-bottom: var(--spacing-3xl);
   min-height: 70vh;
 }
 
 .blog-head {
   text-align: center;
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: 52px;
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+}
+
+.blog-label {
+  margin-top: 10px;
+  margin-bottom: 12px;
+  color: var(--accent-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
 .blog-title {
@@ -91,8 +104,17 @@
 
 /* Chi tiet */
 .blog-detail {
-  padding: calc(64px + var(--spacing-xl)) 0 var(--spacing-3xl);
+  padding-top: calc(64px + var(--spacing-lg));
+  padding-bottom: var(--spacing-3xl);
   max-width: 800px;
+}
+
+.blog-detail__nav {
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-xl);
 }
 
 .blog-detail__head {
@@ -101,13 +123,19 @@
 }
 
 .blog-detail__back {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
 }
 
 .blog-detail__back:hover { color: var(--black); }
+
+.blog-detail__date {
+  display: block;
+  margin-top: 14px;
+}
 
 .blog-detail__title {
   font-family: var(--font-display);
@@ -141,4 +169,5 @@
 
 @media (max-width: 600px) {
   .blog-grid { grid-template-columns: 1fr; }
+  .blog-head { margin-bottom: var(--spacing-xl); }
 }

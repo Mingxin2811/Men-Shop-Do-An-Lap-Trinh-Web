@@ -14,6 +14,31 @@ const buildStats = (reviews) => {
   return { averageRating, totalReviews, distribution };
 };
 
+const getReviewEligibility = async (userId, productId) => {
+  const [completedOrderItem, existingReview] = await Promise.all([
+    prisma.orderItem.findFirst({
+      where: {
+        productId,
+        order: {
+          userId,
+          status: "COMPLETED"
+        }
+      },
+      select: { id: true }
+    }),
+    prisma.review.findUnique({
+      where: { productId_userId: { productId, userId } },
+      select: { id: true }
+    })
+  ]);
+
+  return {
+    canReview: Boolean(completedOrderItem || existingReview),
+    hasCompletedPurchase: Boolean(completedOrderItem),
+    hasReview: Boolean(existingReview)
+  };
+};
+
 // GET /api/products/:id/reviews - danh sach danh gia + thong ke (cong khai)
 const getProductReviews = async (req, res, next) => {
   try {
@@ -50,6 +75,15 @@ const upsertReview = async (req, res, next) => {
       return errorResponse(res, "San pham khong ton tai", 404);
     }
 
+    const eligibility = await getReviewEligibility(userId, productId);
+    if (!eligibility.canReview) {
+      return errorResponse(
+        res,
+        "Bạn chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã hoàn tất.",
+        403
+      );
+    }
+
     const review = await prisma.review.upsert({
       where: { productId_userId: { productId, userId } },
       update: { rating, comment: comment || null },
@@ -58,6 +92,22 @@ const upsertReview = async (req, res, next) => {
     });
 
     return successResponse(res, "Gui danh gia thanh cong", review, 201);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getMyReviewEligibility = async (req, res, next) => {
+  try {
+    const { id: productId } = req.params;
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true }
+    });
+    if (!product) return errorResponse(res, "Sản phẩm không tồn tại", 404);
+
+    const eligibility = await getReviewEligibility(req.user.id, productId);
+    return successResponse(res, "Lấy quyền đánh giá thành công", eligibility);
   } catch (error) {
     return next(error);
   }
@@ -78,6 +128,7 @@ const deleteMyReview = async (req, res, next) => {
 
 module.exports = {
   getProductReviews,
+  getMyReviewEligibility,
   upsertReview,
   deleteMyReview
 };

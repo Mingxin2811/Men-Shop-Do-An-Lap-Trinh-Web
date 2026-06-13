@@ -23,14 +23,56 @@ const createCheckoutSession = async (req, res, next) => {
       return errorResponse(res, "Don hang COD khong can checkout online", 400);
     }
 
-    const apiBaseUrl = getApiBaseUrl(req);
-    const checkoutUrl = `${apiBaseUrl}/api/payments/mock-gateway?orderId=${orderId}`;
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const checkoutUrl = `${clientUrl}/payment-checkout?orderId=${orderId}`;
 
     return successResponse(res, "Tao phien thanh toan gia lap thanh cong", {
       checkoutUrl,
-      successUrl: `${apiBaseUrl}/api/payments/success?orderId=${orderId}`,
-      cancelUrl: `${apiBaseUrl}/api/payments/cancel?orderId=${orderId}`
+      successUrl: `${clientUrl}/payment-success?orderId=${orderId}`,
+      cancelUrl: `${clientUrl}/payment-cancel?orderId=${orderId}`
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const confirmPayment = async (req, res, next) => {
+  try {
+    const { orderId } = req.body;
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || order.userId !== req.user.id) {
+      return errorResponse(res, "Không tìm thấy đơn hàng hợp lệ", 404);
+    }
+    if (order.paymentMethod === "COD") {
+      return errorResponse(res, "Đơn COD không hỗ trợ thanh toán online", 400);
+    }
+    if (order.status === "CANCELLED") {
+      return errorResponse(res, "Đơn hàng đã bị hủy", 400);
+    }
+    if (order.paymentStatus === "PAID") {
+      return successResponse(res, "Đơn hàng đã được thanh toán", { orderId });
+    }
+
+    await markPaymentSuccess(orderId);
+    return successResponse(res, "Thanh toán thành công", { orderId });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const cancelPayment = async (req, res, next) => {
+  try {
+    const { orderId } = req.body;
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || order.userId !== req.user.id) {
+      return errorResponse(res, "Không tìm thấy đơn hàng hợp lệ", 404);
+    }
+    if (order.paymentStatus === "PAID") {
+      return errorResponse(res, "Đơn hàng đã được thanh toán", 400);
+    }
+
+    await markPaymentCancel(orderId);
+    return successResponse(res, "Đã hủy thanh toán", { orderId });
   } catch (error) {
     return next(error);
   }
@@ -165,6 +207,8 @@ const stripeWebhook = async (req, res) => {
 
 module.exports = {
   createCheckoutSession,
+  confirmPayment,
+  cancelPayment,
   handleMockPaymentGateway,
   handlePaymentSuccess,
   handlePaymentCancel,
