@@ -103,16 +103,22 @@ const createOrder = async (req, res, next) => {
           }
         });
 
-        if (item.variantId) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { decrement: item.quantity } }
-          });
-        } else {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } }
-          });
+        // Tru ton kho co dieu kien (chi khi stock >= quantity) trong cung 1 query,
+        // tranh ban qua so luong khi nhieu don dat cung luc (race condition).
+        const updated = item.variantId
+          ? await tx.productVariant.updateMany({
+              where: { id: item.variantId, stock: { gte: item.quantity } },
+              data: { stock: { decrement: item.quantity } }
+            })
+          : await tx.product.updateMany({
+              where: { id: item.productId, stock: { gte: item.quantity } },
+              data: { stock: { decrement: item.quantity } }
+            });
+
+        if (updated.count === 0) {
+          const stockError = new Error(`San pham ${item.product.name} khong du ton kho`);
+          stockError.publicMessage = `San pham ${item.product.name} khong du ton kho`;
+          throw stockError;
         }
       }
 
@@ -142,6 +148,10 @@ const createOrder = async (req, res, next) => {
 
     return successResponse(res, "Dat hang thanh cong", order, 201);
   } catch (error) {
+    // Loi ton kho khong du (phat hien trong transaction) -> tra ve 400 ro rang.
+    if (error.publicMessage) {
+      return errorResponse(res, error.publicMessage, 400);
+    }
     return next(error);
   }
 };

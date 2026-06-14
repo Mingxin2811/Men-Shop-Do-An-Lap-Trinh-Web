@@ -16,7 +16,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Chỉ tự đăng xuất + chuyển về /login khi token hết hạn ở các request đã đăng nhập.
+    // Lỗi 401 ngay tại trang đăng nhập (sai email/mật khẩu) phải để component hiển thị,
+    // tránh reload trang làm mất thông báo lỗi.
+    const isLoginRequest = (error.config?.url || '').includes('/auth/login');
+    if (error.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

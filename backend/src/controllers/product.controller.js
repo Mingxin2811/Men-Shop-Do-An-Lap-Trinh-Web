@@ -64,7 +64,10 @@ const getProducts = async (req, res, next) => {
     const where = { isActive: true };
 
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } }
+      ];
     }
 
     if (category) {
@@ -129,7 +132,10 @@ const getAdminProducts = async (req, res, next) => {
     const where = {};
 
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } }
+      ];
     }
 
     if (category) {
