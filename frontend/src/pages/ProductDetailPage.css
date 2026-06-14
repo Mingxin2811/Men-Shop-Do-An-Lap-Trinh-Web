@@ -218,6 +218,17 @@
   border-color: var(--black);
 }
 
+/* Size hết hàng: mờ + gạch ngang, không bấm được */
+.pdp-size-btn--out {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.pdp-size-btn--out:hover {
+  border-color: var(--border);
+}
+
 .pdp-color-grid {
   display: flex;
   flex-wrap: wrap;
@@ -241,6 +252,33 @@
   background: var(--black);
   color: var(--white);
   border-color: var(--black);
+}
+
+/* Màu dạng swatch: chấm tròn màu + nhãn */
+.pdp-color-btn--swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px 7px 10px;
+}
+
+.pdp-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+}
+
+/* Màu hết hàng */
+.pdp-color-btn--out {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.pdp-color-btn--out:hover {
+  border-color: var(--border);
 }
 
 .pdp-stock {

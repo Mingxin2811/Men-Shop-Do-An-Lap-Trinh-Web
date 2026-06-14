@@ -9,6 +9,10 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // giỏ hàng drawer
+
+  const openCart = useCallback(() => setIsOpen(true), []);
+  const closeCart = useCallback(() => setIsOpen(false), []);
 
   const fetchCart = useCallback(async () => {
     if (!user) { setItems([]); setTotal(0); return; }
@@ -26,6 +30,7 @@ export function CartProvider({ children }) {
   const addToCart = useCallback(async (productId, quantity, variantId) => {
     await cartService.addToCart({ productId, quantity, variantId: variantId || undefined });
     await fetchCart();
+    setIsOpen(true); // mở drawer sau khi thêm (giống Zara/Nike)
   }, [fetchCart]);
 
   const updateItem = useCallback(async (id, quantity) => {
@@ -46,7 +51,7 @@ export function CartProvider({ children }) {
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, total, count, loading, fetchCart, addToCart, updateItem, removeItem, clearCart }}>
+    <CartContext.Provider value={{ items, total, count, loading, isOpen, openCart, closeCart, fetchCart, addToCart, updateItem, removeItem, clearCart }}>
       {children}
     </CartContext.Provider>
   );
