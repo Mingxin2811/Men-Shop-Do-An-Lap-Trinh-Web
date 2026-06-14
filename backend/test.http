@@ -1,0 +1,369 @@
+### 1. Health check
+GET http://localhost:5000/api/health
+
+###
+
+### 2. Login customer
+# @name loginCustomer
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@menshop.com",
+  "password": "Customer123456"
+}
+
+###
+
+@customerToken = {{loginCustomer.response.body.data.token}}
+
+### 3. Login admin
+# @name loginAdmin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@menshop.com",
+  "password": "Admin123456"
+}
+
+###
+
+@adminToken = {{loginAdmin.response.body.data.token}}
+
+### 4. Register tài khoản mới
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Nguyen Van A",
+  "email": "user001@example.com",
+  "password": "12345678",
+  "phone": "0901234567"
+}
+
+###
+
+### 5. Get me
+GET http://localhost:5000/api/auth/me
+Authorization: Bearer {{customerToken}}
+
+###
+
+### 6. Update profile
+PUT http://localhost:5000/api/auth/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "Nguyen Van A Updated",
+  "phone": "0901234567",
+  "address": "123 Nguyen Trai, TP HCM"
+}
+
+###
+
+### 7. Lấy danh sách categories
+# @name getCategories
+GET http://localhost:5000/api/categories
+
+###
+
+@categoryId = {{getCategories.response.body.data[0].id}}
+
+### 8. Tạo category (admin)
+# @name createCategory
+POST http://localhost:5000/api/categories
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Ao polo test",
+  "description": "Danh muc test"
+}
+
+###
+
+@newCategoryId = {{createCategory.response.body.data.id}}
+
+### 9. Sửa category (admin)
+PUT http://localhost:5000/api/categories/{{newCategoryId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Ao polo updated",
+  "description": "Mo ta moi"
+}
+
+###
+
+### 10. Xóa category (admin)
+DELETE http://localhost:5000/api/categories/{{newCategoryId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 11. Lấy danh sách sản phẩm
+# @name getProducts
+GET http://localhost:5000/api/products?limit=5&page=1&sort=newest
+
+###
+
+@productId = {{getProducts.response.body.data.products[0].id}}
+@variantId = {{getProducts.response.body.data.products[0].variants[0].id}}
+
+### 12. Tìm kiếm và lọc sản phẩm
+GET http://localhost:5000/api/products?search=ao&category=ao-thun&minPrice=100000&maxPrice=500000&sort=price_asc&page=1&limit=12
+
+###
+
+### 13. Lấy chi tiết sản phẩm
+GET http://localhost:5000/api/products/{{productId}}
+
+###
+
+### 14. Tạo sản phẩm (admin)
+# @name createProduct
+POST http://localhost:5000/api/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "categoryId": "{{categoryId}}",
+  "name": "Ao polo postman test",
+  "description": "San pham tao bang test",
+  "price": 299000,
+  "imageUrl": "https://example.com/polo.jpg",
+  "stock": 30,
+  "variants": [
+    { "size": "M", "color": "Den", "stock": 10 },
+    { "size": "L", "color": "Trang", "stock": 8 }
+  ]
+}
+
+###
+
+@newProductId = {{createProduct.response.body.data.id}}
+
+### 15. Sửa sản phẩm (admin)
+PUT http://localhost:5000/api/products/{{newProductId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 319000,
+  "stock": 25
+}
+
+###
+
+### 16. Ẩn sản phẩm (admin)
+DELETE http://localhost:5000/api/products/{{newProductId}}
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 17. Xóa sạch giỏ hàng
+DELETE http://localhost:5000/api/cart
+Authorization: Bearer {{customerToken}}
+
+###
+
+### 18. Thêm sản phẩm vào giỏ
+# @name addToCart
+POST http://localhost:5000/api/cart
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 1
+}
+
+###
+
+@cartItemId = {{addToCart.response.body.data.id}}
+
+### 19. Lấy giỏ hàng
+GET http://localhost:5000/api/cart
+Authorization: Bearer {{customerToken}}
+
+###
+
+### 20. Cập nhật số lượng
+PUT http://localhost:5000/api/cart/{{cartItemId}}
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "quantity": 2
+}
+
+###
+
+### 21. Xóa một item
+DELETE http://localhost:5000/api/cart/{{cartItemId}}
+Authorization: Bearer {{customerToken}}
+
+###
+
+### 22. Thêm lại vào giỏ trước khi tạo đơn
+# @name addToCart2
+POST http://localhost:5000/api/cart
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 1
+}
+
+###
+
+### 23. Tạo đơn hàng COD
+# @name createOrderCOD
+POST http://localhost:5000/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingName": "Nguyen Van A",
+  "shippingPhone": "0901234567",
+  "shippingAddress": "123 Nguyen Trai, TP HCM",
+  "paymentMethod": "COD"
+}
+
+###
+
+@orderId = {{createOrderCOD.response.body.data.id}}
+
+### 24. Thêm lại vào giỏ trước khi tạo đơn STRIPE
+# @name addToCart3
+POST http://localhost:5000/api/cart
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 1
+}
+
+###
+
+### 25. Tạo đơn hàng STRIPE
+# @name createOrderSTRIPE
+POST http://localhost:5000/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingName": "Nguyen Van A",
+  "shippingPhone": "0901234567",
+  "shippingAddress": "123 Nguyen Trai, TP HCM",
+  "paymentMethod": "STRIPE"
+}
+
+###
+
+@stripeOrderId = {{createOrderSTRIPE.response.body.data.id}}
+
+### 26. Lấy đơn hàng của tôi
+GET http://localhost:5000/api/orders/my-orders
+Authorization: Bearer {{customerToken}}
+
+###
+
+### 27. Chi tiết đơn hàng COD
+GET http://localhost:5000/api/orders/{{orderId}}
+Authorization: Bearer {{customerToken}}
+
+###
+
+### 28. Admin lấy tất cả đơn hàng
+GET http://localhost:5000/api/orders?page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 29. Admin lọc đơn hàng theo status
+GET http://localhost:5000/api/orders?status=PENDING
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 30. Admin cập nhật trạng thái đơn hàng
+PUT http://localhost:5000/api/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "CONFIRMED"
+}
+
+###
+
+### 31. Tạo checkout session STRIPE
+# @name createCheckout
+POST http://localhost:5000/api/payments/create-checkout-session
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "orderId": "{{stripeOrderId}}"
+}
+
+###
+
+### 32. Payment success
+GET http://localhost:5000/api/payments/success?orderId={{stripeOrderId}}
+Accept: application/json
+
+###
+
+### 33. Payment cancel
+GET http://localhost:5000/api/payments/cancel?orderId={{stripeOrderId}}
+Accept: application/json
+
+###
+
+### 34. Admin dashboard
+GET http://localhost:5000/api/admin/dashboard
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 35. Admin danh sách users
+# @name getUsers
+GET http://localhost:5000/api/admin/users?page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+###
+
+@userId = {{getUsers.response.body.data.users[0].id}}
+
+### 36. Admin tìm kiếm user
+GET http://localhost:5000/api/admin/users?search=customer
+Authorization: Bearer {{adminToken}}
+
+###
+
+### 37. Admin khóa user
+PUT http://localhost:5000/api/admin/users/{{userId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### 38. Admin mở khóa user
+PUT http://localhost:5000/api/admin/users/{{userId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}

@@ -24,7 +24,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminBlogPage from './pages/admin/AdminBlogPage';
-import { AdminCategoriesPage, AdminOrdersPage, AdminUsersPage } from './pages/admin/AdminPages';
+import { AdminCategoriesPage, AdminOrdersPage, AdminUsersPage, AdminCouponsPage } from './pages/admin/AdminPages';
 
 export default function App() {
   return (
@@ -71,6 +71,7 @@ export default function App() {
                       <Route path="/admin/blog" element={<AdminBlogPage />} />
                       <Route path="/admin/categories" element={<AdminCategoriesPage />} />
                       <Route path="/admin/orders" element={<AdminOrdersPage />} />
+                      <Route path="/admin/coupons" element={<AdminCouponsPage />} />
                       <Route path="/admin/users" element={<AdminUsersPage />} />
                     </Route>
                   </Route>

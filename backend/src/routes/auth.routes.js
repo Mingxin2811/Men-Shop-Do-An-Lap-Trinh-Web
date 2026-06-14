@@ -11,6 +11,7 @@ const {
 } = require("../controllers/auth.controller");
 const protect = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
+const { authLimiter } = require("../middlewares/rateLimit.middleware");
 
 const router = express.Router();
 
@@ -106,6 +107,7 @@ router.post(
  */
 router.post(
   "/login",
+  authLimiter,
   [
     body("email").isEmail().withMessage("Email khong hop le"),
     body("password").notEmpty().withMessage("Mat khau la bat buoc")
@@ -217,6 +219,7 @@ router.put(
 
 router.post(
   "/forgot-password",
+  authLimiter,
   [body("email").isEmail().withMessage("Email khong hop le")],
   validate,
   forgotPassword
@@ -224,6 +227,7 @@ router.post(
 
 router.post(
   "/reset-password",
+  authLimiter,
   [
     body("token").notEmpty().withMessage("Thieu token"),
     body("newPassword").isLength({ min: 8 }).withMessage("Mat khau moi phai co it nhat 8 ky tu")

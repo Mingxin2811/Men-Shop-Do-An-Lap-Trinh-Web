@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { orderService } from '../services/order.service';
 import { paymentService } from '../services/payment.service';
+import { couponService } from '../services/coupon.service';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatProductColor } from '../utils/productOptions';
@@ -24,8 +25,39 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Mã giảm giá
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState(null); // { code, discountAmount, finalTotal }
+  const [couponError, setCouponError] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
+  const discount = coupon?.discountAmount || 0;
+  const finalTotal = Math.max(0, total - discount);
+
   const handleChange = (e) => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  };
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponError('');
+    setApplyingCoupon(true);
+    try {
+      const res = await couponService.validate(code);
+      setCoupon(res.data.data);
+    } catch (e) {
+      setCoupon(null);
+      setCouponError(e.response?.data?.message || 'Mã giảm giá không hợp lệ.');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCoupon(null);
+    setCouponInput('');
+    setCouponError('');
   };
 
   const handleSubmit = async (e) => {
@@ -36,7 +68,10 @@ export default function CheckoutPage() {
     }
     try {
       setLoading(true);
-      const res = await orderService.createOrder(form);
+      const res = await orderService.createOrder({
+        ...form,
+        couponCode: coupon?.code,
+      });
       const order = res.data.data;
 
       if (form.paymentMethod === 'STRIPE') {
@@ -170,11 +205,51 @@ export default function CheckoutPage() {
             ))}
           </div>
 
+          {/* Mã giảm giá */}
+          <div className="checkout-coupon">
+            {coupon ? (
+              <div className="checkout-coupon__applied">
+                <span>
+                  Đã áp dụng mã <strong>{coupon.code}</strong>
+                </span>
+                <button type="button" onClick={handleRemoveCoupon} className="checkout-coupon__remove">
+                  Gỡ
+                </button>
+              </div>
+            ) : (
+              <div className="checkout-coupon__input">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Nhập mã giảm giá"
+                  value={couponInput}
+                  onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleApplyCoupon(); } }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleApplyCoupon}
+                  disabled={applyingCoupon || !couponInput.trim()}
+                >
+                  {applyingCoupon ? <span className="spinner" /> : 'Áp dụng'}
+                </button>
+              </div>
+            )}
+            {couponError && <p className="checkout-coupon__error">{couponError}</p>}
+          </div>
+
           <div className="checkout-summary__rows">
             <div className="checkout-summary__row">
               <span>Tạm tính</span>
               <span>{formatPrice(total)}</span>
             </div>
+            {discount > 0 && (
+              <div className="checkout-summary__row">
+                <span>Giảm giá {coupon?.code ? `(${coupon.code})` : ''}</span>
+                <span style={{ color: '#16a34a' }}>−{formatPrice(discount)}</span>
+              </div>
+            )}
             <div className="checkout-summary__row">
               <span>Vận chuyển</span>
               <span style={{ color: '#16a34a' }}>Miễn phí</span>
@@ -183,7 +258,7 @@ export default function CheckoutPage() {
 
           <div className="checkout-summary__total">
             <span>Tổng cộng</span>
-            <span>{formatPrice(total)}</span>
+            <span>{formatPrice(finalTotal)}</span>
           </div>
         </div>
       </div>

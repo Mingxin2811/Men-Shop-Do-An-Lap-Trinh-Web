@@ -1,7 +1,26 @@
 const prisma = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
 const { getEffectivePrice } = require("../utils/price");
+const { computeDiscount, getCouponError } = require("../utils/coupon");
 const { sendMail, buildOrderConfirmationEmail } = require("../utils/mailer");
+
+// Hoan tra ton kho cho cac item cua mot don hang khi don bi huy.
+// Dung chung cho khach tu huy va admin huy don.
+const restoreStock = async (tx, items) => {
+  for (const item of items) {
+    if (item.variantId) {
+      await tx.productVariant.update({
+        where: { id: item.variantId },
+        data: { stock: { increment: item.quantity } }
+      });
+    } else {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: item.quantity } }
+      });
+    }
+  }
+};
 
 const createOrder = async (req, res, next) => {
   try {
@@ -10,7 +29,8 @@ const createOrder = async (req, res, next) => {
       shippingName,
       shippingPhone,
       shippingAddress,
-      paymentMethod = "COD"
+      paymentMethod = "COD",
+      couponCode
     } = req.body;
 
     const cartItems = await prisma.cartItem.findMany({
@@ -22,13 +42,13 @@ const createOrder = async (req, res, next) => {
       return errorResponse(res, "Gio hang trong, khong the dat hang", 400);
     }
 
-    let totalAmount = 0;
+    let subtotal = 0;
     for (const item of cartItems) {
       if (!item.product.isActive) {
         return errorResponse(res, `San pham ${item.product.name} da bi an`, 400);
       }
 
-      totalAmount += getEffectivePrice(item.product) * item.quantity;
+      subtotal += getEffectivePrice(item.product) * item.quantity;
 
       const availableStock = item.variant ? item.variant.stock : item.product.stock;
       if (availableStock < item.quantity) {
@@ -36,11 +56,30 @@ const createOrder = async (req, res, next) => {
       }
     }
 
+    // Ap dung ma giam gia (neu co). Tinh lai phia server de tranh gia mao.
+    let coupon = null;
+    let discountAmount = 0;
+    if (couponCode) {
+      coupon = await prisma.coupon.findUnique({
+        where: { code: String(couponCode).trim().toUpperCase() }
+      });
+      const couponError = getCouponError(coupon, subtotal);
+      if (couponError) {
+        return errorResponse(res, couponError, 400);
+      }
+      discountAmount = computeDiscount(coupon, subtotal);
+    }
+
+    const totalAmount = subtotal - discountAmount;
+
     const order = await prisma.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           userId,
           totalAmount,
+          discountAmount,
+          couponId: coupon?.id || null,
+          couponCode: coupon?.code || null,
           status: "PENDING",
           paymentStatus: paymentMethod === "COD" ? "UNPAID" : "PENDING",
           paymentMethod,
@@ -75,6 +114,14 @@ const createOrder = async (req, res, next) => {
             data: { stock: { decrement: item.quantity } }
           });
         }
+      }
+
+      // Ghi nhan da dung ma giam gia.
+      if (coupon) {
+        await tx.coupon.update({
+          where: { id: coupon.id },
+          data: { usedCount: { increment: 1 } }
+        });
       }
 
       await tx.cartItem.deleteMany({ where: { userId } });
@@ -185,15 +232,34 @@ const updateOrderStatus = async (req, res, next) => {
       return errorResponse(res, "Trang thai don hang khong hop le", 400);
     }
 
-    const existingOrder = await prisma.order.findUnique({ where: { id } });
+    const existingOrder = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true }
+    });
     if (!existingOrder) {
       return errorResponse(res, "Khong tim thay don hang", 404);
     }
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status },
-      include: { items: true, payment: true }
+    // Khi admin chuyen don sang CANCELLED (va don chua bi huy truoc do):
+    // hoan tra ton kho da tru, va danh dau hoan tien neu don da thanh toan.
+    const isCancelling =
+      status === "CANCELLED" && existingOrder.status !== "CANCELLED";
+
+    const order = await prisma.$transaction(async (tx) => {
+      if (isCancelling) {
+        await restoreStock(tx, existingOrder.items);
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: {
+          status,
+          ...(isCancelling && existingOrder.paymentStatus === "PAID"
+            ? { paymentStatus: "REFUNDED" }
+            : {})
+        },
+        include: { items: true, payment: true }
+      });
     });
 
     return successResponse(res, "Cap nhat trang thai don hang thanh cong", order);
@@ -227,19 +293,7 @@ const cancelMyOrder = async (req, res, next) => {
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // Hoàn lại tồn kho đã trừ khi đặt hàng.
-      for (const item of order.items) {
-        if (item.variantId) {
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { increment: item.quantity } }
-          });
-        } else {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { increment: item.quantity } }
-          });
-        }
-      }
+      await restoreStock(tx, order.items);
 
       return tx.order.update({
         where: { id },

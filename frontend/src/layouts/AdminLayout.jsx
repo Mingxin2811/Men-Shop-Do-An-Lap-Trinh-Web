@@ -44,6 +44,13 @@ export default function AdminLayout() {
             </svg>
             Đơn hàng
           </NavLink>
+          <NavLink to="/admin/coupons">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M9 7H4a2 2 0 00-2 2v6a2 2 0 002 2h5m0-10v10m0-10h11a2 2 0 012 2v6a2 2 0 01-2 2H9"/>
+              <path d="M9 11v2"/>
+            </svg>
+            Mã giảm giá
+          </NavLink>
           <NavLink to="/admin/blog">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>

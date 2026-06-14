@@ -182,6 +182,18 @@ export function OrderDetailPage() {
                 </div>
               </div>
             ))}
+            {Number(order.discountAmount) > 0 && (
+              <>
+                <div className="order-total" style={{ borderBottom: 'none', paddingBottom: 0, fontWeight: 400, color: 'var(--text-secondary)' }}>
+                  <span>Tạm tính</span>
+                  <span>{formatPrice(Number(order.totalAmount) + Number(order.discountAmount))}</span>
+                </div>
+                <div className="order-total" style={{ borderBottom: 'none', paddingTop: 4, paddingBottom: 0, fontWeight: 400, color: '#16a34a' }}>
+                  <span>Giảm giá {order.couponCode ? `(${order.couponCode})` : ''}</span>
+                  <span>−{formatPrice(order.discountAmount)}</span>
+                </div>
+              </>
+            )}
             <div className="order-total">
               <span>Tổng cộng</span>
               <span>{formatPrice(order.totalAmount)}</span>
