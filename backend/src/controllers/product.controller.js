@@ -67,13 +67,16 @@ const getProducts = async (req, res, next) => {
     // Cac nhom dieu kien dang OR duoc gom vao AND de khong de len nhau.
     const and = [];
 
+    // Tim kiem khong dau (bo dau tieng Viet) nho extension unaccent:
+    // "ao thun" se khop "Áo thun". Lay id cac san pham khop roi dua vao dieu kien.
     if (search) {
-      and.push({
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } }
-        ]
-      });
+      const like = `%${search}%`;
+      const matched = await prisma.$queryRaw`
+        SELECT id FROM products
+        WHERE unaccent(lower(name)) LIKE unaccent(lower(${like}))
+           OR unaccent(lower(description)) LIKE unaccent(lower(${like}))
+      `;
+      and.push({ id: { in: matched.map((row) => row.id) } });
     }
 
     if (category) {
