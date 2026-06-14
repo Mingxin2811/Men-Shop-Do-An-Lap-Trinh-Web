@@ -176,3 +176,90 @@
   background: var(--red);
   color: var(--white);
 }
+
+/* Timeline trạng thái đơn */
+.order-timeline {
+  display: flex;
+  align-items: flex-start;
+}
+
+.order-timeline__step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  text-align: center;
+}
+
+.order-timeline__dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--white);
+  color: var(--mid-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.order-timeline__step.done .order-timeline__dot {
+  border-color: var(--black);
+  background: var(--black);
+  color: var(--white);
+}
+
+.order-timeline__step.current .order-timeline__dot {
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08);
+}
+
+.order-timeline__label {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--mid-gray);
+}
+
+.order-timeline__step.done .order-timeline__label {
+  color: var(--black);
+  font-weight: 500;
+}
+
+.order-timeline__bar {
+  position: absolute;
+  top: 15px;
+  right: 50%;
+  left: -50%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.order-timeline__bar.done {
+  background: var(--black);
+}
+
+.order-timeline--cancelled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--red);
+  font-weight: 500;
+}
+
+.order-timeline__x {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}

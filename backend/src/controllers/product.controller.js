@@ -53,6 +53,8 @@ const getProducts = async (req, res, next) => {
       maxPrice,
       size,
       color,
+      onSale,
+      inStock,
       page = 1,
       limit = 12,
       sort = "newest"
@@ -62,12 +64,16 @@ const getProducts = async (req, res, next) => {
     const currentPage = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (currentPage - 1) * take;
     const where = { isActive: true };
+    // Cac nhom dieu kien dang OR duoc gom vao AND de khong de len nhau.
+    const and = [];
 
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } }
-      ];
+      and.push({
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } }
+        ]
+      });
     }
 
     if (category) {
@@ -87,6 +93,25 @@ const getProducts = async (req, res, next) => {
           ...(color ? { color } : {})
         }
       };
+    }
+
+    // Chi lay san pham dang giam gia (co salePrice hop le).
+    if (onSale === "true") {
+      where.salePrice = { gt: 0 };
+    }
+
+    // Chi lay san pham con hang (con ton kho o san pham hoac o bien the).
+    if (inStock === "true") {
+      and.push({
+        OR: [
+          { stock: { gt: 0 } },
+          { variants: { some: { stock: { gt: 0 } } } }
+        ]
+      });
+    }
+
+    if (and.length > 0) {
+      where.AND = and;
     }
 
     let orderBy = { createdAt: "desc" };

@@ -32,6 +32,8 @@ export default function ProductListPage() {
   const currentMaxPrice = searchParams.get('maxPrice') || '';
   const currentSize = searchParams.get('size') || '';
   const currentColor = searchParams.get('color') || '';
+  const currentOnSale = searchParams.get('onSale') === 'true';
+  const currentInStock = searchParams.get('inStock') === 'true';
   const [searchInput, setSearchInput] = useState(currentSearch);
 
   const fetchProducts = useCallback(async () => {
@@ -47,6 +49,8 @@ export default function ProductListPage() {
         ...(currentMaxPrice && { maxPrice: currentMaxPrice }),
         ...(currentSize && { size: currentSize }),
         ...(currentColor && { color: currentColor }),
+        ...(currentOnSale && { onSale: 'true' }),
+        ...(currentInStock && { inStock: 'true' }),
       };
       const res = await productService.getProducts(params);
       setProducts(res.data.data.products || []);
@@ -54,7 +58,7 @@ export default function ProductListPage() {
       setTotalProducts(res.data.data.totalProducts || 0);
     } catch { setProducts([]); }
     finally { setLoading(false); }
-  }, [currentPage, currentSort, currentCategory, currentSearch, currentMinPrice, currentMaxPrice, currentSize, currentColor]);
+  }, [currentPage, currentSort, currentCategory, currentSearch, currentMinPrice, currentMaxPrice, currentSize, currentColor, currentOnSale, currentInStock]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -115,6 +119,27 @@ export default function ProductListPage() {
           <div className="plp-filters__header">
             <h6>Bộ lọc</h6>
             <button onClick={() => setFilterOpen(false)} className="plp-filters__close">✕</button>
+          </div>
+
+          {/* Ưu đãi / tình trạng */}
+          <div className="filter-group">
+            <label className="filter-label">Ưu đãi</label>
+            <div className="filter-chip-grid">
+              <button
+                type="button"
+                className={`filter-chip${currentOnSale ? ' active' : ''}`}
+                onClick={() => updateParam('onSale', currentOnSale ? '' : 'true')}
+              >
+                Đang giảm giá
+              </button>
+              <button
+                type="button"
+                className={`filter-chip${currentInStock ? ' active' : ''}`}
+                onClick={() => updateParam('inStock', currentInStock ? '' : 'true')}
+              >
+                Còn hàng
+              </button>
+            </div>
           </div>
 
           {/* Search */}
