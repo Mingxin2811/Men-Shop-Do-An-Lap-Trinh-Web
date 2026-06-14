@@ -3,7 +3,13 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { productService } from '../../services/product.service';
 import './Navbar.css';
+
+const formatPrice = (p) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+const effectivePrice = (p) =>
+  Number(p.salePrice) > 0 && Number(p.salePrice) < Number(p.price) ? p.salePrice : p.price;
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -16,6 +22,8 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [sugLoading, setSugLoading] = useState(false);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -33,6 +41,27 @@ export default function Navbar() {
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
+
+  // Gợi ý tìm kiếm tức thì (debounce 300ms, từ 2 ký tự).
+  useEffect(() => {
+    const term = searchTerm.trim();
+    if (!searchOpen || term.length < 2) { setSuggestions([]); setSugLoading(false); return; }
+    setSugLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await productService.getProducts({ search: term, limit: 5 });
+        setSuggestions(res.data.data.products || []);
+      } catch { setSuggestions([]); }
+      finally { setSugLoading(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, searchOpen]);
+
+  const handleSelectSuggestion = () => {
+    setSearchOpen(false);
+    setSearchTerm('');
+    setSuggestions([]);
+  };
 
   const handleLogout = () => {
     logout();
@@ -155,6 +184,44 @@ export default function Navbar() {
           <button type="submit" className="btn btn-primary btn-sm">Tìm kiếm</button>
           <button type="button" className="navbar__search-close" onClick={() => setSearchOpen(false)} aria-label="Đóng">✕</button>
         </form>
+
+        {/* Gợi ý tức thì */}
+        {searchOpen && searchTerm.trim().length >= 2 && (
+          <div className="navbar__search-results">
+            <div className="container">
+              {sugLoading && suggestions.length === 0 ? (
+                <div className="navbar__suggestion-empty">Đang tìm…</div>
+              ) : suggestions.length === 0 ? (
+                <div className="navbar__suggestion-empty">Không tìm thấy sản phẩm phù hợp</div>
+              ) : (
+                <>
+                  {suggestions.map(p => (
+                    <Link
+                      key={p.id}
+                      to={`/products/${p.id}`}
+                      className="navbar__suggestion"
+                      onClick={handleSelectSuggestion}
+                    >
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        onError={e => { e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=120'; }}
+                      />
+                      <div className="navbar__suggestion-info">
+                        <span className="navbar__suggestion-name">{p.name}</span>
+                        <span className="navbar__suggestion-cat">{p.category?.name}</span>
+                      </div>
+                      <span className="navbar__suggestion-price">{formatPrice(effectivePrice(p))}</span>
+                    </Link>
+                  ))}
+                  <button type="button" className="navbar__suggestion-all" onClick={handleSearchSubmit}>
+                    Xem tất cả kết quả cho “{searchTerm.trim()}”
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile Menu */}
