@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
+import CartDrawer from '../components/cart/CartDrawer';
 import './MainLayout.css';
 
 export default function MainLayout() {
@@ -11,6 +12,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+      <CartDrawer />
     </div>
   );
 }

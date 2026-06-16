@@ -205,6 +205,7 @@ Seed data tạo:
 - 6 danh mục.
 - 20 sản phẩm demo, phân bố đều theo danh mục.
 - Biến thể size/màu cho sản phẩm.
+- 2 mã giảm giá demo (`WELCOME10`, `GIAM50K`).
 
 ## Tài khoản demo
 
@@ -256,6 +257,16 @@ Cart/Orders:
 - `GET /api/orders/:id`
 - `GET /api/orders`
 - `PUT /api/orders/:id/status`
+
+Coupons (mã giảm giá):
+
+- `POST /api/coupons/validate` (customer kiểm tra mã với giỏ hàng)
+- `GET /api/coupons` (admin)
+- `POST /api/coupons` (admin)
+- `PUT /api/coupons/:id` (admin)
+- `DELETE /api/coupons/:id` (admin)
+
+Mã giảm giá demo (sau khi seed): `WELCOME10` (giảm 10% đơn từ 300k, tối đa 100k), `GIAM50K` (giảm 50k đơn từ 500k).
 
 Payments/Admin:
 
@@ -322,5 +333,4 @@ VITE_API_URL=https://backend-domain.example.com/api
 
 - Tích hợp Stripe checkout thật thay cho mock gateway.
 - Upload ảnh sản phẩm thay vì dùng URL ảnh.
-- Thêm đánh giá sản phẩm, wishlist, mã giảm giá.
 - Bổ sung test tự động cho backend và frontend.

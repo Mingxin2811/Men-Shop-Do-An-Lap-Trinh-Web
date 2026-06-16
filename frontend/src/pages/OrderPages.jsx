@@ -129,6 +129,11 @@ export function OrderDetailPage() {
 
       <div className="order-detail__layout">
         <div>
+          {/* Timeline trạng thái */}
+          <div className="card mb-lg">
+            <OrderTimeline status={order.status} />
+          </div>
+
           {/* Info */}
           <div className="card mb-lg">
             <div className="order-info-grid">
@@ -187,6 +192,18 @@ export function OrderDetailPage() {
                 </div>
               </div>
             ))}
+            {Number(order.discountAmount) > 0 && (
+              <>
+                <div className="order-total" style={{ borderBottom: 'none', paddingBottom: 0, fontWeight: 400, color: 'var(--text-secondary)' }}>
+                  <span>Tạm tính</span>
+                  <span>{formatPrice(Number(order.totalAmount) + Number(order.discountAmount))}</span>
+                </div>
+                <div className="order-total" style={{ borderBottom: 'none', paddingTop: 4, paddingBottom: 0, fontWeight: 400, color: '#16a34a' }}>
+                  <span>Giảm giá {order.couponCode ? `(${order.couponCode})` : ''}</span>
+                  <span>−{formatPrice(order.discountAmount)}</span>
+                </div>
+              </>
+            )}
             <div className="order-total">
               <span>Tổng cộng</span>
               <span>{formatPrice(order.totalAmount)}</span>
@@ -204,6 +221,39 @@ export function OrderDetailPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+const TIMELINE_STEPS = [
+  { key: 'PENDING', label: 'Đặt hàng' },
+  { key: 'CONFIRMED', label: 'Xác nhận' },
+  { key: 'SHIPPING', label: 'Đang giao' },
+  { key: 'COMPLETED', label: 'Hoàn thành' },
+];
+
+function OrderTimeline({ status }) {
+  if (status === 'CANCELLED') {
+    return (
+      <div className="order-timeline order-timeline--cancelled">
+        <span className="order-timeline__x">✕</span>
+        Đơn hàng đã bị hủy
+      </div>
+    );
+  }
+  const currentIndex = TIMELINE_STEPS.findIndex(s => s.key === status);
+  return (
+    <div className="order-timeline">
+      {TIMELINE_STEPS.map((step, i) => (
+        <div
+          key={step.key}
+          className={`order-timeline__step${i <= currentIndex ? ' done' : ''}${i === currentIndex ? ' current' : ''}`}
+        >
+          {i > 0 && <div className={`order-timeline__bar${i <= currentIndex ? ' done' : ''}`} />}
+          <div className="order-timeline__dot">{i < currentIndex ? '✓' : i + 1}</div>
+          <span className="order-timeline__label">{step.label}</span>
+        </div>
+      ))}
     </div>
   );
 }

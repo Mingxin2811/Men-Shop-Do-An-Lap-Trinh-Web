@@ -5,7 +5,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useRecentlyViewed } from '../contexts/RecentlyViewedContext';
-import { formatProductColor, normalizeProductColor } from '../utils/productOptions';
+import { formatProductColor, normalizeProductColor, getColorHex } from '../utils/productOptions';
 import { getSaleInfo } from '../utils/price';
 import WishlistButton from '../components/product/WishlistButton';
 import SizeGuideModal from '../components/product/SizeGuideModal';
@@ -81,6 +81,15 @@ export default function ProductDetailPage() {
 
   const sizes = [...new Set(product?.variants?.map(v => v.size) || [])];
   const colors = [...new Set(product?.variants?.filter(v => !selectedSize || v.size === selectedSize).map(v => v.color) || [])];
+
+  // Size còn hàng nếu có ít nhất 1 biến thể size đó còn tồn kho (bất kể màu).
+  const sizeHasStock = (size) =>
+    (product?.variants || []).some(v => v.size === size && v.stock > 0);
+  // Màu còn hàng (ứng với size đang chọn, nếu đã chọn).
+  const colorHasStock = (color) =>
+    (product?.variants || []).some(
+      v => v.color === color && (!selectedSize || v.size === selectedSize) && v.stock > 0
+    );
   const gallery = product
     ? [...new Set([product.imageUrl, ...(product.images?.map(img => img.url) || [])].filter(Boolean))]
     : [];
@@ -199,15 +208,20 @@ export default function ProductDetailPage() {
                 </button>
               </div>
               <div className="pdp-size-grid">
-                {sizes.map(s => (
-                  <button
-                    key={s}
-                    className={`pdp-size-btn${selectedSize === s ? ' active' : ''}`}
-                    onClick={() => { setSelectedSize(s); setSelectedColor(''); setSelectedVariant(null); }}
-                  >
-                    {s}
-                  </button>
-                ))}
+                {sizes.map(s => {
+                  const out = !sizeHasStock(s);
+                  return (
+                    <button
+                      key={s}
+                      className={`pdp-size-btn${selectedSize === s ? ' active' : ''}${out ? ' pdp-size-btn--out' : ''}`}
+                      onClick={() => { setSelectedSize(s); setSelectedColor(''); setSelectedVariant(null); }}
+                      disabled={out}
+                      title={out ? 'Hết hàng' : undefined}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -219,15 +233,22 @@ export default function ProductDetailPage() {
                 {selectedColor && <span className="pdp-option__selected">{selectedColor}</span>}
               </div>
               <div className="pdp-color-grid">
-                {colors.map(c => (
-                  <button
-                    key={c}
-                    className={`pdp-color-btn${selectedColor === c ? ' active' : ''}`}
-                    onClick={() => setSelectedColor(c)}
-                  >
-                    {formatProductColor(c)}
-                  </button>
-                ))}
+                {colors.map(c => {
+                  const out = !colorHasStock(c);
+                  const hex = getColorHex(c);
+                  return (
+                    <button
+                      key={c}
+                      className={`pdp-color-btn${selectedColor === c ? ' active' : ''}${out ? ' pdp-color-btn--out' : ''}${hex ? ' pdp-color-btn--swatch' : ''}`}
+                      onClick={() => setSelectedColor(c)}
+                      disabled={out}
+                      title={out ? `${formatProductColor(c)} — hết hàng` : formatProductColor(c)}
+                    >
+                      {hex && <span className="pdp-color-dot" style={{ background: hex }} />}
+                      <span>{formatProductColor(c)}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

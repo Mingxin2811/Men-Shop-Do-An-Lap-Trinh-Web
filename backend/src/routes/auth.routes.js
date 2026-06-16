@@ -12,6 +12,7 @@ const {
 } = require("../controllers/auth.controller");
 const protect = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
+const { authLimiter } = require("../middlewares/rateLimit.middleware");
 
 const router = express.Router();
 const strongPassword = (field, label = "Mật khẩu") =>
@@ -128,6 +129,7 @@ router.post(
  */
 router.post(
   "/login",
+  authLimiter,
   [
     body("email").isEmail().withMessage("Email khong hop le"),
     body("password").notEmpty().withMessage("Mat khau la bat buoc")
@@ -248,6 +250,7 @@ router.put(
 
 router.post(
   "/forgot-password",
+  authLimiter,
   [body("email").isEmail().withMessage("Email khong hop le")],
   validate,
   forgotPassword
@@ -255,6 +258,7 @@ router.post(
 
 router.post(
   "/reset-password",
+  authLimiter,
   [
     body("email").isEmail().withMessage("Email không hợp lệ"),
     body("otp").matches(/^\d{6}$/).withMessage("Mã OTP phải gồm 6 chữ số"),

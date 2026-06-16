@@ -270,6 +270,32 @@ async function main() {
       });
     }
   }
+
+  // Ma giam gia demo.
+  const coupons = [
+    {
+      code: "WELCOME10",
+      description: "Giam 10% cho don tu 300k, toi da 100k.",
+      discountType: "PERCENT",
+      discountValue: 10,
+      minOrderValue: 300000,
+      maxDiscount: 100000
+    },
+    {
+      code: "GIAM50K",
+      description: "Giam 50k cho don tu 500k.",
+      discountType: "FIXED",
+      discountValue: 50000,
+      minOrderValue: 500000
+    }
+  ];
+  for (const coupon of coupons) {
+    await prisma.coupon.upsert({
+      where: { code: coupon.code },
+      update: coupon,
+      create: coupon
+    });
+  }
 }
 
 main()

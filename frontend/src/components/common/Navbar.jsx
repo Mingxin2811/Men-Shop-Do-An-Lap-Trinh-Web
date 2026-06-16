@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { productService } from '../../services/product.service';
 import './Navbar.css';
 
 const AVATAR_PRESETS = {
@@ -13,6 +14,14 @@ const AVATAR_PRESETS = {
   bear: { emoji: '🐻', background: '#d8b18a' },
   lion: { emoji: '🦁', background: '#f1ca72' },
 };
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
+const effectivePrice = (product) =>
+  Number(product.salePrice) > 0 && Number(product.salePrice) < Number(product.price)
+    ? product.salePrice
+    : product.price;
 
 function HeaderAvatar({ user }) {
   if (user.avatar?.startsWith('data:image/')) {
@@ -34,7 +43,7 @@ function HeaderAvatar({ user }) {
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { count } = useCart();
+  const { count, openCart } = useCart();
   const { count: wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,6 +52,8 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [sugLoading, setSugLoading] = useState(false);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -61,24 +72,60 @@ export default function Navbar() {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
+  useEffect(() => {
+    const term = searchTerm.trim();
+    if (!searchOpen || term.length < 2) {
+      setSuggestions([]);
+      setSugLoading(false);
+      return undefined;
+    }
+
+    setSugLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await productService.getProducts({ search: term, limit: 5 });
+        setSuggestions(res.data.data.products || []);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setSugLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, searchOpen]);
+
+  const handleSelectSuggestion = () => {
+    setSearchOpen(false);
+    setSearchTerm('');
+    setSuggestions([]);
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
     const term = searchTerm.trim();
     if (!term) return;
     setSearchOpen(false);
     setSearchTerm('');
+    setSuggestions([]);
     navigate(`/products?search=${encodeURIComponent(term)}`);
   };
 
   const handleSuggestedSearch = (term) => {
     setSearchOpen(false);
     setSearchTerm('');
+    setSuggestions([]);
     navigate(`/products?search=${encodeURIComponent(term)}`);
+  };
+
+  const handleCartClick = () => {
+    if (user) openCart();
+    else navigate('/login');
   };
 
   const isHome = location.pathname === '/';
@@ -86,7 +133,6 @@ export default function Navbar() {
   return (
     <nav className={`navbar${scrolled || !isHome || searchOpen ? ' navbar--solid' : ''}${menuOpen ? ' navbar--open' : ''}`}>
       <div className="navbar__inner container">
-        {/* Mobile hamburger */}
         <button
           className={`navbar__hamburger${menuOpen ? ' active' : ''}`}
           onClick={() => setMenuOpen(!menuOpen)}
@@ -95,13 +141,11 @@ export default function Navbar() {
           <span /><span /><span />
         </button>
 
-        {/* Logo */}
         <Link to="/" className="navbar__logo">
           <span className="navbar__logo-main">MEN'S</span>
           <span className="navbar__logo-sub">SHOP</span>
         </Link>
 
-        {/* Nav links */}
         <ul className="navbar__links">
           <li><NavLink to="/products">Bộ sưu tập</NavLink></li>
           <li><NavLink to="/products?category=ao-thun">Áo</NavLink></li>
@@ -110,12 +154,10 @@ export default function Navbar() {
           <li><NavLink to="/blog">Blogs</NavLink></li>
         </ul>
 
-        {/* Actions */}
         <div className="navbar__actions">
-          {/* Search */}
           <button
             className={`navbar__action-btn${searchOpen ? ' active' : ''}`}
-            onClick={() => setSearchOpen(o => !o)}
+            onClick={() => setSearchOpen((open) => !open)}
             aria-label="Tìm kiếm sản phẩm"
             aria-expanded={searchOpen}
             data-tooltip="Tìm kiếm sản phẩm"
@@ -125,7 +167,6 @@ export default function Navbar() {
             </svg>
           </button>
 
-          {/* Wishlist */}
           <Link
             to="/wishlist"
             className="navbar__action-btn navbar__wishlist"
@@ -182,9 +223,10 @@ export default function Navbar() {
             </Link>
           )}
 
-          <Link
-            to="/cart"
+          <button
+            type="button"
             className="navbar__action-btn navbar__cart"
+            onClick={handleCartClick}
             aria-label="Giỏ hàng"
             data-tooltip={count > 0 ? `Giỏ hàng: ${count} sản phẩm` : 'Giỏ hàng đang trống'}
           >
@@ -194,11 +236,10 @@ export default function Navbar() {
               <path d="M16 10a4 4 0 01-8 0"/>
             </svg>
             {count > 0 && <span className="navbar__cart-badge">{count}</span>}
-          </Link>
+          </button>
         </div>
       </div>
 
-      {/* Search panel */}
       <div className={`navbar__search${searchOpen ? ' open' : ''}`}>
         <div className="navbar__search-inner container">
           <div className="navbar__search-card">
@@ -212,32 +253,69 @@ export default function Navbar() {
                   type="text"
                   placeholder="Bạn đang tìm sản phẩm nào?"
                   value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  onChange={(event) => setSearchTerm(event.target.value)}
                 />
                 <button type="submit" className="navbar__search-submit">Tìm kiếm</button>
               </form>
               <button type="button" className="navbar__search-close" onClick={() => setSearchOpen(false)} aria-label="Đóng">×</button>
             </div>
-            <div className="navbar__search-suggestions">
-              <span>Gợi ý:</span>
-              {['Áo sơ mi', 'Áo khoác', 'Quần jeans', 'Phụ kiện'].map(term => (
-                <button key={term} type="button" onClick={() => handleSuggestedSearch(term)}>
-                  {term}
-                </button>
-              ))}
-            </div>
+
+            {searchTerm.trim().length < 2 ? (
+              <div className="navbar__search-suggestions">
+                <span>Gợi ý:</span>
+                {['Áo sơ mi', 'Áo khoác', 'Quần jeans', 'Phụ kiện'].map((term) => (
+                  <button key={term} type="button" onClick={() => handleSuggestedSearch(term)}>
+                    {term}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="navbar__search-results">
+                {sugLoading && suggestions.length === 0 ? (
+                  <div className="navbar__suggestion-empty">Đang tìm...</div>
+                ) : suggestions.length === 0 ? (
+                  <div className="navbar__suggestion-empty">Không tìm thấy sản phẩm phù hợp</div>
+                ) : (
+                  <>
+                    {suggestions.map((product) => (
+                      <Link
+                        key={product.id}
+                        to={`/products/${product.id}`}
+                        className="navbar__suggestion"
+                        onClick={handleSelectSuggestion}
+                      >
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          onError={(event) => {
+                            event.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=120';
+                          }}
+                        />
+                        <div className="navbar__suggestion-info">
+                          <span className="navbar__suggestion-name">{product.name}</span>
+                          <span className="navbar__suggestion-cat">{product.category?.name}</span>
+                        </div>
+                        <span className="navbar__suggestion-price">{formatPrice(effectivePrice(product))}</span>
+                      </Link>
+                    ))}
+                    <button type="button" className="navbar__suggestion-all" onClick={handleSearchSubmit}>
+                      Xem tất cả kết quả cho "{searchTerm.trim()}"
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <div className={`navbar__mobile-menu${menuOpen ? ' open' : ''}`}>
         <form className="navbar__mobile-search" onSubmit={handleSearchSubmit}>
           <input
             type="text"
             placeholder="Tìm sản phẩm..."
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(event) => setSearchTerm(event.target.value)}
           />
           <button type="submit" aria-label="Tìm kiếm">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

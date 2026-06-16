@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { productService, categoryService } from '../services/product.service';
 import ProductCard from '../components/product/ProductCard';
 import ProductCardSkeleton from '../components/product/ProductCardSkeleton';
-import mensFashionHero from '../assets/mens-fashion-collection-hero.png';
+import mensFashionHero from '../assets/mens-fashion-collection-hero.jpg';
 import './HomePage.css';
 
 const formatPrice = (p) =>

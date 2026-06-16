@@ -174,6 +174,7 @@
 
 /* Search panel trượt xuống dưới thanh nav */
 .navbar__search {
+  position: relative;
   max-height: 0;
   overflow: hidden;
   background: rgba(250, 250, 248, 0.98);
@@ -185,6 +186,96 @@
 .navbar__search.open {
   max-height: 138px;
   border-top-color: var(--border);
+  overflow: visible;
+}
+
+/* Gợi ý tìm kiếm tức thì */
+.navbar__search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  z-index: 1100;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.navbar__suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 8px var(--spacing-xl);
+  text-decoration: none;
+  color: var(--black);
+  transition: background 0.15s;
+}
+
+.navbar__suggestion:hover {
+  background: var(--offwhite);
+}
+
+.navbar__suggestion img {
+  width: 44px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--warm-gray);
+  flex-shrink: 0;
+}
+
+.navbar__suggestion-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar__suggestion-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navbar__suggestion-cat {
+  font-size: 0.72rem;
+  color: var(--mid-gray);
+}
+
+.navbar__suggestion-price {
+  font-size: 0.82rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.navbar__suggestion-all {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px var(--spacing-xl);
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.15s;
+}
+
+.navbar__suggestion-all:hover {
+  color: var(--black);
+}
+
+.navbar__suggestion-empty {
+  padding: 14px var(--spacing-xl);
+  font-size: 0.85rem;
+  color: var(--mid-gray);
 }
 
 .navbar__search-inner {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { categoryService } from '../../services/product.service';
 import { adminService, orderService } from '../../services/order.service';
+import { couponService } from '../../services/coupon.service';
 
 const formatPrice = (price) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -234,6 +235,202 @@ export function AdminCategoriesPage() {
   );
 }
 
+// ── Coupons ─────────────────────────────────────────────
+const EMPTY_COUPON = {
+  code: '', description: '', discountType: 'PERCENT', discountValue: '',
+  minOrderValue: '', maxDiscount: '', usageLimit: '', expiresAt: '', isActive: true,
+};
+
+export function AdminCouponsPage() {
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_COUPON);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const fetch = async () => {
+    setLoading(true);
+    try { const res = await couponService.getCoupons(); setCoupons(res.data.data || []); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetch(); }, []);
+
+  const openCreate = () => { setEditing(null); setForm(EMPTY_COUPON); setError(''); setShowForm(true); };
+  const openEdit = (c) => {
+    setEditing(c);
+    setForm({
+      code: c.code,
+      description: c.description || '',
+      discountType: c.discountType,
+      discountValue: c.discountValue,
+      minOrderValue: c.minOrderValue ?? '',
+      maxDiscount: c.maxDiscount ?? '',
+      usageLimit: c.usageLimit ?? '',
+      expiresAt: c.expiresAt ? c.expiresAt.slice(0, 10) : '',
+      isActive: c.isActive,
+    });
+    setError('');
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(''); setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        discountValue: Number(form.discountValue),
+        minOrderValue: form.minOrderValue === '' ? 0 : Number(form.minOrderValue),
+        maxDiscount: form.maxDiscount === '' ? null : Number(form.maxDiscount),
+        usageLimit: form.usageLimit === '' ? null : Number(form.usageLimit),
+        expiresAt: form.expiresAt || null,
+      };
+      if (editing) await couponService.updateCoupon(editing.id, payload);
+      else await couponService.createCoupon(payload);
+      await fetch();
+      setShowForm(false);
+    } catch (e) { setError(e.response?.data?.message || 'Có lỗi xảy ra.'); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Xóa mã giảm giá này?')) return;
+    try { await couponService.deleteCoupon(id); await fetch(); }
+    catch (e) { alert(e.response?.data?.message || 'Không thể xóa.'); }
+  };
+
+  const formatValue = (c) =>
+    c.discountType === 'PERCENT' ? `${Number(c.discountValue)}%` : formatPrice(c.discountValue);
+
+  return (
+    <div>
+      <div className="admin-page-header">
+        <h1>Mã giảm giá</h1>
+        <button className="btn btn-primary" onClick={openCreate}>+ Thêm mã</button>
+      </div>
+
+      {showForm && (
+        <div className="admin-modal-overlay" onClick={() => setShowForm(false)}>
+          <div className="admin-modal" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal__header">
+              <h3>{editing ? 'Sửa mã giảm giá' : 'Thêm mã giảm giá'}</h3>
+              <button onClick={() => setShowForm(false)}>✕</button>
+            </div>
+            {error && <div className="alert alert-error">{error}</div>}
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label">Mã *</label>
+                <input className="form-input" style={{ textTransform: 'uppercase' }} value={form.code}
+                  onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Mô tả</label>
+                <input className="form-input" value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Loại</label>
+                  <select className="form-select" value={form.discountType}
+                    onChange={e => setForm(f => ({ ...f, discountType: e.target.value }))}>
+                    <option value="PERCENT">Theo % </option>
+                    <option value="FIXED">Số tiền cố định</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">{form.discountType === 'PERCENT' ? 'Phần trăm giảm (%) *' : 'Số tiền giảm (đ) *'}</label>
+                  <input className="form-input" type="number" min="0" value={form.discountValue}
+                    onChange={e => setForm(f => ({ ...f, discountValue: e.target.value }))} required />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Đơn tối thiểu (đ)</label>
+                  <input className="form-input" type="number" min="0" value={form.minOrderValue}
+                    onChange={e => setForm(f => ({ ...f, minOrderValue: e.target.value }))} />
+                </div>
+                {form.discountType === 'PERCENT' && (
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className="form-label">Giảm tối đa (đ)</label>
+                    <input className="form-input" type="number" min="0" value={form.maxDiscount}
+                      onChange={e => setForm(f => ({ ...f, maxDiscount: e.target.value }))} />
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Giới hạn lượt dùng</label>
+                  <input className="form-input" type="number" min="0" placeholder="Không giới hạn" value={form.usageLimit}
+                    onChange={e => setForm(f => ({ ...f, usageLimit: e.target.value }))} />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Ngày hết hạn</label>
+                  <input className="form-input" type="date" value={form.expiresAt}
+                    onChange={e => setForm(f => ({ ...f, expiresAt: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={form.isActive}
+                    onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} />
+                  Đang kích hoạt
+                </label>
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? <span className="spinner" /> : 'Lưu'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Hủy</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="loading-center"><div className="spinner spinner-lg" /></div>
+      ) : coupons.length === 0 ? (
+        <p style={{ color: 'var(--mid-gray)' }}>Chưa có mã giảm giá nào.</p>
+      ) : (
+        <div style={{ background: 'white', border: '1px solid var(--border)', overflowX: 'auto' }}>
+          <table className="table">
+            <thead><tr>
+              <th>Mã</th><th>Giảm</th><th>Đơn tối thiểu</th><th>Đã dùng</th><th>Hết hạn</th><th>Trạng thái</th><th>Hành động</th>
+            </tr></thead>
+            <tbody>
+              {coupons.map(c => (
+                <tr key={c.id}>
+                  <td style={{ fontWeight: 500 }}>{c.code}</td>
+                  <td>{formatValue(c)}</td>
+                  <td>{Number(c.minOrderValue) > 0 ? formatPrice(c.minOrderValue) : '—'}</td>
+                  <td>{c.usedCount}{c.usageLimit ? ` / ${c.usageLimit}` : ''}</td>
+                  <td style={{ fontSize: '0.8rem', color: 'var(--mid-gray)' }}>{c.expiresAt ? formatDate(c.expiresAt) : '—'}</td>
+                  <td>
+                    <span className={`badge ${c.isActive ? 'badge-dark' : 'badge-light'}`}>
+                      {c.isActive ? 'Kích hoạt' : 'Tắt'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn btn-outline btn-sm" onClick={() => openEdit(c)}>Sửa</button>
+                      <button className="btn btn-sm" style={{ border: '1px solid var(--red)', color: 'var(--red)' }}
+                        onClick={() => handleDelete(c.id)}>Xóa</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Orders ──────────────────────────────────────────────
 const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
 const STATUS_LABELS = {
   PENDING: 'Chờ xử lý',

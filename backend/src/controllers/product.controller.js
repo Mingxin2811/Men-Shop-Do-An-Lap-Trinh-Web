@@ -53,6 +53,8 @@ const getProducts = async (req, res, next) => {
       maxPrice,
       size,
       color,
+      onSale,
+      inStock,
       page = 1,
       limit = 12,
       sort = "newest"
@@ -62,9 +64,19 @@ const getProducts = async (req, res, next) => {
     const currentPage = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (currentPage - 1) * take;
     const where = { isActive: true };
+    // Cac nhom dieu kien dang OR duoc gom vao AND de khong de len nhau.
+    const and = [];
 
+    // Tim kiem khong dau (bo dau tieng Viet) nho extension unaccent:
+    // "ao thun" se khop "Áo thun". Lay id cac san pham khop roi dua vao dieu kien.
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      const like = `%${search}%`;
+      const matched = await prisma.$queryRaw`
+        SELECT id FROM products
+        WHERE unaccent(lower(name)) LIKE unaccent(lower(${like}))
+           OR unaccent(lower(description)) LIKE unaccent(lower(${like}))
+      `;
+      and.push({ id: { in: matched.map((row) => row.id) } });
     }
 
     if (category) {
@@ -84,6 +96,25 @@ const getProducts = async (req, res, next) => {
           ...(color ? { color } : {})
         }
       };
+    }
+
+    // Chi lay san pham dang giam gia (co salePrice hop le).
+    if (onSale === "true") {
+      where.salePrice = { gt: 0 };
+    }
+
+    // Chi lay san pham con hang (con ton kho o san pham hoac o bien the).
+    if (inStock === "true") {
+      and.push({
+        OR: [
+          { stock: { gt: 0 } },
+          { variants: { some: { stock: { gt: 0 } } } }
+        ]
+      });
+    }
+
+    if (and.length > 0) {
+      where.AND = and;
     }
 
     let orderBy = { createdAt: "desc" };
@@ -129,7 +160,10 @@ const getAdminProducts = async (req, res, next) => {
     const where = {};
 
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } }
+      ];
     }
 
     if (category) {
