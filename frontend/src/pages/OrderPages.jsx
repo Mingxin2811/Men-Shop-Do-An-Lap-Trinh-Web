@@ -90,6 +90,7 @@ export function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   useEffect(() => {
     orderService.getOrder(id)
@@ -98,11 +99,11 @@ export function OrderDetailPage() {
   }, [id]);
 
   const handleCancel = async () => {
-    if (!window.confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) return;
     try {
       setCancelling(true);
       const res = await orderService.cancelOrder(id);
       setOrder(res.data.data);
+      setCancelModalOpen(false);
       toast.success('Đã hủy đơn hàng');
     } catch (e) {
       toast.error(e.response?.data?.message || 'Không thể hủy đơn hàng');
@@ -214,13 +215,58 @@ export function OrderDetailPage() {
           {order.status === 'PENDING' && (
             <div className="order-cancel">
               <p className="order-cancel__note">Đơn hàng đang chờ xử lý — bạn có thể hủy ngay bây giờ.</p>
-              <button className="btn btn-outline order-cancel__btn" onClick={handleCancel} disabled={cancelling}>
+              <button className="btn btn-outline order-cancel__btn" onClick={() => setCancelModalOpen(true)} disabled={cancelling}>
                 {cancelling ? <span className="spinner" /> : 'Hủy đơn hàng'}
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {cancelModalOpen && (
+        <div className="order-modal-overlay" onClick={() => !cancelling && setCancelModalOpen(false)}>
+          <div
+            className="order-confirm-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-order-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="order-confirm-modal__close"
+              onClick={() => setCancelModalOpen(false)}
+              disabled={cancelling}
+              aria-label="Đóng"
+            >
+              ×
+            </button>
+            <div className="order-confirm-modal__icon">!</div>
+            <h3 id="cancel-order-title">Xác nhận hủy đơn hàng</h3>
+            <p>
+              Bạn chắc chắn muốn hủy đơn #{order.id.slice(-8).toUpperCase()}? Thao tác này sẽ chuyển đơn hàng sang trạng thái đã hủy.
+            </p>
+            <div className="order-confirm-modal__actions">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setCancelModalOpen(false)}
+                disabled={cancelling}
+              >
+                Giữ đơn hàng
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleCancel}
+                disabled={cancelling}
+              >
+                {cancelling ? <span className="spinner" /> : 'Xác nhận hủy'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

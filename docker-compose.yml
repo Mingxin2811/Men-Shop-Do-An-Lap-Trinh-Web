@@ -2,16 +2,17 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: mens_shop_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: mens_shop
-      POSTGRES_PASSWORD: mens_shop_password
-      POSTGRES_DB: mens_shop_db
+      POSTGRES_USER: ${POSTGRES_USER:-mens_shop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mens_shop_password}
+      POSTGRES_DB: ${POSTGRES_DB:-mens_shop_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mens_shop -d mens_shop_db"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,35 +21,50 @@ services:
     build:
       context: ./backend
     container_name: mens_shop_backend
+    restart: unless-stopped
     environment:
-      PORT: 5000
+      PORT: ${BACKEND_CONTAINER_PORT:-5000}
       NODE_ENV: production
-      DATABASE_URL: postgresql://mens_shop:mens_shop_password@postgres:5432/mens_shop_db?schema=public
-      JWT_SECRET: change_me_to_a_long_random_secret
-      JWT_EXPIRES_IN: 7d
-      CLIENT_URL: http://localhost:5173
-      PAYMENT_PROVIDER: mock
-      STRIPE_SECRET_KEY: sk_test_replace_me
-      STRIPE_WEBHOOK_SECRET: whsec_replace_me
-      STRIPE_SUCCESS_URL: http://localhost:5173/payment-success
-      STRIPE_CANCEL_URL: http://localhost:5173/payment-cancel
-    command: sh -c "npx prisma migrate deploy && node prisma/seed.js && npm start"
+      DATABASE_URL: ${DATABASE_URL:-postgresql://mens_shop:mens_shop_password@postgres:5432/mens_shop_db?schema=public}
+      JWT_SECRET: ${JWT_SECRET:-change_me_to_a_long_random_secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      API_URL: ${API_URL:-http://localhost:5000}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-mock}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_replace_me}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_replace_me}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost:5173/payment-success}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost:5173/payment-cancel}
+    command: sh -c "npx prisma migrate deploy && npm run prisma:seed && npm start"
     ports:
-      - "5000:5000"
+      - "${BACKEND_PORT:-5000}:${BACKEND_CONTAINER_PORT:-5000}"
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:' + (process.env.PORT || 5000) + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: http://localhost:5000/api
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
     container_name: mens_shop_frontend
+    restart: unless-stopped
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-5173}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

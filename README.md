@@ -104,6 +104,7 @@ LTW-Men's Shop/
   docker-compose.yml
   docker-compose.override.yml
   docker-compose.deploy.yml
+  .env.docker.example
   README.md
 ```
 
@@ -241,10 +242,16 @@ http://localhost:5173
 
 ## Chạy bằng Docker Compose
 
-Từ thư mục root:
+Mở PowerShell tại thư mục root của project, tức thư mục có `docker-compose.yml`, `docker-compose.override.yml`, `docker-compose.deploy.yml` và `README.md`:
 
 ```powershell
-docker compose up --build
+cd "c:\Mingxin's documents\School\Web\Đồ án web\LTW-Men's Shop"
+```
+
+Chạy bản Docker demo:
+
+```powershell
+docker compose up -d --build
 ```
 
 File `docker-compose.yml` chạy:
@@ -252,21 +259,60 @@ File `docker-compose.yml` chạy:
 - PostgreSQL.
 - Backend Express.
 - Frontend build qua Nginx.
+- Healthcheck cho PostgreSQL, backend và frontend.
+
+Nếu muốn đổi port, database, domain frontend/backend hoặc khóa JWT khi chạy Docker, có thể copy file mẫu:
+
+```powershell
+Copy-Item .env.docker.example .env
+```
+
+Sau đó chỉnh các biến cần thiết trong `.env`.
 
 Repo hiện có `docker-compose.override.yml` để tránh trùng port với local dev. Khi override tồn tại, URL Docker là:
 
 ```text
 Frontend: http://localhost:5174
 Backend:  http://localhost:5001
+Health:   http://localhost:5001/api/health
+API docs: http://localhost:5001/api-docs
 ```
 
 Backend Docker mặc định chạy:
 
 ```text
-npx prisma migrate deploy && node prisma/seed.js && npm start
+npx prisma migrate deploy && npm run prisma:seed && npm start
 ```
 
-Dừng container:
+Kiểm tra container đang chạy:
+
+```powershell
+docker compose ps
+```
+
+Xem log tất cả service:
+
+```powershell
+docker compose logs -f
+```
+
+Xem log từng service:
+
+```powershell
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f postgres
+```
+
+Khởi động lại riêng một service:
+
+```powershell
+docker compose restart backend
+docker compose restart frontend
+docker compose restart postgres
+```
+
+Dừng container nhưng giữ dữ liệu database trong volume:
 
 ```powershell
 docker compose down
@@ -278,11 +324,36 @@ Dừng và xóa volume database:
 docker compose down -v
 ```
 
+Chỉ dùng `docker compose down -v` khi muốn reset sạch database Docker.
+
 Nếu deploy Docker nhưng không muốn seed dữ liệu demo, dùng:
 
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d --build
 ```
+
+Khi chạy theo file deploy, `docker-compose.override.yml` không tự áp dụng, URL là:
+
+```text
+Frontend: http://localhost:5173
+Backend:  http://localhost:5000
+Health:   http://localhost:5000/api/health
+API docs: http://localhost:5000/api-docs
+```
+
+Tắt chế độ deploy:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.deploy.yml down
+```
+
+Khi deploy bằng lệnh trên, hãy đặt lại tối thiểu các biến `DATABASE_URL`, `JWT_SECRET`, `CLIENT_URL`, `API_URL`, `VITE_API_URL`, `STRIPE_SUCCESS_URL` và `STRIPE_CANCEL_URL` trong `.env` hoặc môi trường của máy chủ.
+
+### Docker Hub và chi phí hosting
+
+Docker Hub là nơi lưu image, không phải nơi chạy website. Push image public lên Docker Hub thường đủ dùng miễn phí cho đồ án cá nhân, nhưng các giới hạn private repository, pull rate, team hoặc tính năng nâng cao phụ thuộc gói Docker Hub.
+
+Để website chạy thật trên Internet, cần một nơi chạy container. Nếu bắt buộc chạy đủ frontend, backend và PostgreSQL bằng Docker Compose trên Internet thì thường cần VPS hoặc nền tảng container, đa số có thể phát sinh phí. Hướng miễn phí/dễ demo hơn là deploy frontend lên Vercel, backend lên Render/Railway/Koyeb nếu còn free tier, và database lên Neon/Supabase free tier.
 
 ## Database, migration và seed
 

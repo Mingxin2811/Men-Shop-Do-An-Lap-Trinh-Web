@@ -40,6 +40,18 @@ app.use(
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Men's Shop backend API is running",
+    data: {
+      health: "/api/health",
+      docs: "/api-docs",
+      products: "/api/products"
+    }
+  });
+});
+
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,

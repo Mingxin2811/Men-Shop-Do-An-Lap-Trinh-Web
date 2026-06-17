@@ -128,10 +128,8 @@ export default function Navbar() {
     else navigate('/login');
   };
 
-  const isHome = location.pathname === '/';
-
   return (
-    <nav className={`navbar${scrolled || !isHome || searchOpen ? ' navbar--solid' : ''}${menuOpen ? ' navbar--open' : ''}`}>
+    <nav className={`navbar navbar--solid${scrolled ? ' navbar--scrolled' : ''}${searchOpen ? ' navbar--searching' : ''}${menuOpen ? ' navbar--open' : ''}`}>
       <div className="navbar__inner container">
         <button
           className={`navbar__hamburger${menuOpen ? ' active' : ''}`}

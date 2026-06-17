@@ -23,6 +23,7 @@ Frontend:
 
 ```text
 frontend/Dockerfile
+frontend/.dockerignore
 frontend/nginx.conf
 ```
 
@@ -30,12 +31,16 @@ Backend:
 
 ```text
 backend/Dockerfile
+backend/.dockerignore
 ```
 
 Compose local:
 
 ```text
 docker-compose.yml
+docker-compose.override.yml
+docker-compose.deploy.yml
+.env.docker.example
 ```
 
 ## Chạy local bằng Docker Compose
@@ -53,6 +58,16 @@ Các service:
 | postgres | `5432` | PostgreSQL 16 |
 | backend | `5000` | Express API |
 | frontend | `5173` | React static build qua Nginx |
+
+Compose co healthcheck cho PostgreSQL, backend va frontend. Backend chi chay sau khi PostgreSQL healthy; frontend chi chay sau khi backend tra `/api/health`.
+
+Neu can doi port, database URL, domain frontend/backend hoac secret khi chay Docker, copy file mau:
+
+```powershell
+Copy-Item .env.docker.example .env
+```
+
+Sau do chinh cac bien can thiet trong `.env`.
 
 URL:
 
@@ -74,8 +89,14 @@ Backend container tự chạy migration và seed:
 
 ```text
 npx prisma migrate deploy
-node prisma/seed.js
+npm run prisma:seed
 npm start
+```
+
+Neu deploy Docker nhung khong muon seed du lieu demo:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d --build
 ```
 
 ## Dừng Docker
@@ -97,12 +118,16 @@ docker compose down -v
 Local Docker Compose dùng:
 
 ```env
-PORT=5000
+BACKEND_PORT=5000
+BACKEND_CONTAINER_PORT=5000
 NODE_ENV=production
 DATABASE_URL=postgresql://mens_shop:mens_shop_password@postgres:5432/mens_shop_db?schema=public
 JWT_SECRET=change_me_to_a_long_random_secret
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
+API_URL=http://localhost:5000
+FRONTEND_PORT=5173
+VITE_API_URL=http://localhost:5000/api
 PAYMENT_PROVIDER=mock
 STRIPE_SECRET_KEY=sk_test_replace_me
 STRIPE_WEBHOOK_SECRET=whsec_replace_me
@@ -115,6 +140,8 @@ Khi deploy thật, cần thay:
 - `DATABASE_URL`
 - `JWT_SECRET`
 - `CLIENT_URL`
+- `API_URL`
+- `VITE_API_URL`
 - Các biến Stripe nếu dùng Stripe thật.
 
 ## Biến môi trường frontend

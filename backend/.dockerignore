@@ -1,6 +1,12 @@
 node_modules
-npm-debug.log
+npm-debug.log*
 .env
+.env.*
+coverage
+dist
+build
 .git
 .gitignore
 Dockerfile
+README.md
+test.http

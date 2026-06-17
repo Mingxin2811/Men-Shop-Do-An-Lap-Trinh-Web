@@ -5,6 +5,7 @@ services:
   backend:
     environment:
       CLIENT_URL: http://localhost:5174
+      API_URL: http://localhost:5001
       STRIPE_SUCCESS_URL: http://localhost:5174/payment-success
       STRIPE_CANCEL_URL: http://localhost:5174/payment-cancel
     ports: !override
