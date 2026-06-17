@@ -8,3 +8,7 @@
   flex: 1;
   padding-top: 64px;
 }
+
+.main-content--home {
+  padding-top: 0;
+}

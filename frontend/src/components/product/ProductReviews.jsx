@@ -32,17 +32,38 @@ export default function ProductReviews({ productId, onStatsChange }) {
 
   useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
+  const loadEligibility = useCallback((showLoading = false) => {
     if (!user) {
       setEligibility({ canReview: false, hasCompletedPurchase: false, hasReview: false });
-      return;
+      return Promise.resolve();
     }
-    setEligibilityLoading(true);
-    reviewService.getEligibility(productId)
+    if (showLoading) setEligibilityLoading(true);
+    return reviewService.getEligibility(productId)
       .then((res) => setEligibility(res.data.data))
       .catch(() => setEligibility({ canReview: false, hasCompletedPurchase: false, hasReview: false }))
-      .finally(() => setEligibilityLoading(false));
+      .finally(() => {
+        if (showLoading) setEligibilityLoading(false);
+      });
   }, [productId, user]);
+
+  useEffect(() => {
+    loadEligibility(true);
+  }, [loadEligibility]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') loadEligibility(false);
+    };
+    const intervalId = window.setInterval(refreshIfVisible, 8000);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('focus', refreshIfVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('focus', refreshIfVisible);
+    };
+  }, [loadEligibility, user]);
 
   // Điền sẵn form nếu người dùng đã đánh giá sản phẩm này.
   useEffect(() => {
@@ -61,6 +82,7 @@ export default function ProductReviews({ productId, onStatsChange }) {
       await reviewService.submitReview(productId, { rating, comment: comment.trim() });
       toast.success(myReview ? 'Đã cập nhật đánh giá' : 'Cảm ơn bạn đã đánh giá!');
       load();
+      loadEligibility(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể gửi đánh giá');
     } finally { setSubmitting(false); }
@@ -72,6 +94,7 @@ export default function ProductReviews({ productId, onStatsChange }) {
       await reviewService.deleteReview(productId);
       toast.success('Đã xóa đánh giá');
       load();
+      loadEligibility(false);
     } catch {
       toast.error('Không thể xóa đánh giá');
     }

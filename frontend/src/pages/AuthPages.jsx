@@ -9,8 +9,7 @@ import './AuthPages.css';
 const isStrongPassword = (password) =>
   password.length >= 8 &&
   /[A-Za-z]/.test(password) &&
-  /\d/.test(password) &&
-  /[^A-Za-z0-9]/.test(password);
+  /\d/.test(password);
 
 const DEMO_ACCOUNTS = [
   { role: 'Quản trị viên', email: 'admin@menshop.com', password: 'Admin123456' },

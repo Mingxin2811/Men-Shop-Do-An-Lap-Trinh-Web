@@ -46,7 +46,6 @@ const saveAndSendOtp = async ({ email, name, purpose }) => {
     return {
       devOtp:
         result?.skipped &&
-        process.env.NODE_ENV === "development" &&
         process.env.EMAIL_DEV_MODE === "true"
           ? code
           : undefined

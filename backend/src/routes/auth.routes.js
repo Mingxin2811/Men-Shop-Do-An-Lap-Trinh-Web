@@ -22,9 +22,7 @@ const strongPassword = (field, label = "Mật khẩu") =>
     .matches(/[A-Za-z]/)
     .withMessage(`${label} phải có ít nhất một chữ cái`)
     .matches(/\d/)
-    .withMessage(`${label} phải có ít nhất một chữ số`)
-    .matches(/[^A-Za-z0-9]/)
-    .withMessage(`${label} phải có ít nhất một ký tự đặc biệt`);
+    .withMessage(`${label} phải có ít nhất một chữ số`);
 
 router.post(
   "/register/request-otp",

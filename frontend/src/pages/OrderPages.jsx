@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { orderService } from '../services/order.service';
 import { formatProductColor } from '../utils/productOptions';
@@ -31,11 +31,33 @@ export function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    orderService.getMyOrders()
+  const loadOrders = useCallback((showLoading = false) => {
+    if (showLoading) setLoading(true);
+    return orderService.getMyOrders()
       .then(res => setOrders(res.data.data || []))
-      .finally(() => setLoading(false));
+      .catch(() => {})
+      .finally(() => {
+        if (showLoading) setLoading(false);
+      });
   }, []);
+
+  useEffect(() => {
+    loadOrders(true);
+  }, [loadOrders]);
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') loadOrders(false);
+    };
+    const intervalId = window.setInterval(refreshIfVisible, 8000);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('focus', refreshIfVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('focus', refreshIfVisible);
+    };
+  }, [loadOrders]);
 
   if (loading) return <div className="loading-center"><div className="spinner spinner-lg" /></div>;
 
@@ -92,11 +114,33 @@ export function OrderDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
-  useEffect(() => {
-    orderService.getOrder(id)
+  const loadOrder = useCallback((showLoading = false) => {
+    if (showLoading) setLoading(true);
+    return orderService.getOrder(id)
       .then(res => setOrder(res.data.data))
-      .finally(() => setLoading(false));
+      .catch(() => {})
+      .finally(() => {
+        if (showLoading) setLoading(false);
+      });
   }, [id]);
+
+  useEffect(() => {
+    loadOrder(true);
+  }, [loadOrder]);
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible' && !cancelling) loadOrder(false);
+    };
+    const intervalId = window.setInterval(refreshIfVisible, 8000);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    window.addEventListener('focus', refreshIfVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+      window.removeEventListener('focus', refreshIfVisible);
+    };
+  }, [loadOrder, cancelling]);
 
   const handleCancel = async () => {
     try {

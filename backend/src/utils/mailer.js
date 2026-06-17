@@ -28,10 +28,7 @@ const sendMail = async ({ to, subject, html, text }) => {
     ? `${senderName} <${process.env.SMTP_USER}>`
     : senderName;
 
-  if (
-    process.env.NODE_ENV === "development" &&
-    process.env.EMAIL_DEV_MODE === "true"
-  ) {
+  if (process.env.EMAIL_DEV_MODE === "true") {
     console.log("------------ [EMAIL - DEV MODE] ------------");
     console.log("To:", to);
     console.log("Subject:", subject);
