@@ -70,14 +70,13 @@ export default function ProductReviews({ productId, onStatsChange }) {
     };
   }, [loadEligibility, user]);
 
-  // Điền sẵn form nếu người dùng đã đánh giá sản phẩm này.
-  useEffect(() => {
-    const mine = user ? data.reviews.find((r) => r.user?.id === user.id) : null;
-    setRating(mine ? mine.rating : 0);
-    setComment(mine ? (mine.comment || '') : '');
-  }, [data, user]);
-
   const myReview = user ? data.reviews.find((r) => r.user?.id === user.id) : null;
+
+  // Điền sẵn form khi review của chính user thật sự thay đổi, không đè nội dung đang nhập.
+  useEffect(() => {
+    setRating(myReview ? myReview.rating : 0);
+    setComment(myReview ? (myReview.comment || '') : '');
+  }, [myReview?.id, myReview?.rating, myReview?.comment, productId, user?.id]);
 
   const submit = async (e) => {
     e.preventDefault();

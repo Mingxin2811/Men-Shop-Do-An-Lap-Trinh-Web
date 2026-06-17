@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../services/product.service';
 import { useCart } from '../contexts/CartContext';
@@ -90,6 +90,16 @@ export default function ProductDetailPage() {
     (product?.variants || []).some(
       v => v.color === color && (!selectedSize || v.size === selectedSize) && v.stock > 0
     );
+
+  const handleReviewStatsChange = useCallback((averageRating, totalReviews) => {
+    setRatingStats((current) => {
+      if (current.averageRating === averageRating && current.totalReviews === totalReviews) {
+        return current;
+      }
+      return { averageRating, totalReviews };
+    });
+  }, []);
+
   const gallery = product
     ? [...new Set([product.imageUrl, ...(product.images?.map(img => img.url) || [])].filter(Boolean))]
     : [];
@@ -332,7 +342,7 @@ export default function ProductDetailPage() {
       <div id="reviews">
         <ProductReviews
           productId={product.id}
-          onStatsChange={(averageRating, totalReviews) => setRatingStats({ averageRating, totalReviews })}
+          onStatsChange={handleReviewStatsChange}
         />
       </div>
 
