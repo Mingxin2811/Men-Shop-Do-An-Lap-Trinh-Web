@@ -15,16 +15,19 @@ const buildStats = (reviews) => {
 };
 
 const getReviewEligibility = async (userId, productId) => {
-  const [completedOrderItem, existingReview] = await Promise.all([
+  const [purchasedOrderItem, existingReview] = await Promise.all([
     prisma.orderItem.findFirst({
       where: {
         productId,
         order: {
           userId,
-          status: "COMPLETED"
+          status: { not: "CANCELLED" }
         }
       },
-      select: { id: true }
+      select: {
+        id: true,
+        order: { select: { status: true, paymentStatus: true } }
+      }
     }),
     prisma.review.findUnique({
       where: { productId_userId: { productId, userId } },
@@ -33,8 +36,9 @@ const getReviewEligibility = async (userId, productId) => {
   ]);
 
   return {
-    canReview: Boolean(completedOrderItem || existingReview),
-    hasCompletedPurchase: Boolean(completedOrderItem),
+    canReview: Boolean(purchasedOrderItem || existingReview),
+    hasPurchased: Boolean(purchasedOrderItem),
+    hasCompletedPurchase: purchasedOrderItem?.order?.status === "COMPLETED",
     hasReview: Boolean(existingReview)
   };
 };
@@ -79,7 +83,7 @@ const upsertReview = async (req, res, next) => {
     if (!eligibility.canReview) {
       return errorResponse(
         res,
-        "Bạn chỉ có thể đánh giá sản phẩm sau khi đơn hàng đã hoàn tất.",
+        "Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua sản phẩm này.",
         403
       );
     }

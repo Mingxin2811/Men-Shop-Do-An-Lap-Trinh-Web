@@ -17,7 +17,12 @@ export default function ProductReviews({ productId, onStatsChange }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [eligibility, setEligibility] = useState({ canReview: false, hasCompletedPurchase: false, hasReview: false });
+  const [eligibility, setEligibility] = useState({
+    canReview: false,
+    hasPurchased: false,
+    hasCompletedPurchase: false,
+    hasReview: false
+  });
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
 
   const load = useCallback(() => {
@@ -34,13 +39,13 @@ export default function ProductReviews({ productId, onStatsChange }) {
 
   const loadEligibility = useCallback((showLoading = false) => {
     if (!user) {
-      setEligibility({ canReview: false, hasCompletedPurchase: false, hasReview: false });
+      setEligibility({ canReview: false, hasPurchased: false, hasCompletedPurchase: false, hasReview: false });
       return Promise.resolve();
     }
     if (showLoading) setEligibilityLoading(true);
     return reviewService.getEligibility(productId)
       .then((res) => setEligibility(res.data.data))
-      .catch(() => setEligibility({ canReview: false, hasCompletedPurchase: false, hasReview: false }))
+      .catch(() => setEligibility({ canReview: false, hasPurchased: false, hasCompletedPurchase: false, hasReview: false }))
       .finally(() => {
         if (showLoading) setEligibilityLoading(false);
       });
@@ -165,7 +170,7 @@ export default function ProductReviews({ productId, onStatsChange }) {
             <div className="reviews__locked">
               <strong>{eligibilityLoading ? 'Đang kiểm tra quyền đánh giá...' : 'Chưa thể đánh giá sản phẩm'}</strong>
               {!eligibilityLoading && (
-                <p>Bạn có thể đánh giá sau khi đơn hàng chứa sản phẩm này chuyển sang trạng thái Hoàn tất.</p>
+                <p>Bạn có thể đánh giá sau khi sản phẩm này có trong đơn hàng chưa bị hủy của bạn.</p>
               )}
               <Link to="/orders">Xem đơn hàng của tôi →</Link>
             </div>
