@@ -528,9 +528,7 @@
 }
 
 @media (max-width: 380px) {
-  .product-grid,
-  .category-grid,
-  .home-new-products .product-grid {
+  .category-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -133,7 +133,10 @@ export default function Navbar() {
       <div className="navbar__inner container">
         <button
           className={`navbar__hamburger${menuOpen ? ' active' : ''}`}
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => {
+            setMenuOpen((open) => !open);
+            setSearchOpen(false);
+          }}
           aria-label="Menu"
         >
           <span /><span /><span />
@@ -155,7 +158,10 @@ export default function Navbar() {
         <div className="navbar__actions">
           <button
             className={`navbar__action-btn${searchOpen ? ' active' : ''}`}
-            onClick={() => setSearchOpen((open) => !open)}
+            onClick={() => {
+              setSearchOpen((open) => !open);
+              setMenuOpen(false);
+            }}
             aria-label="Tìm kiếm sản phẩm"
             aria-expanded={searchOpen}
             data-tooltip="Tìm kiếm sản phẩm"
@@ -308,19 +314,6 @@ export default function Navbar() {
       </div>
 
       <div className={`navbar__mobile-menu${menuOpen ? ' open' : ''}`}>
-        <form className="navbar__mobile-search" onSubmit={handleSearchSubmit}>
-          <input
-            type="text"
-            placeholder="Tìm sản phẩm..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-          <button type="submit" aria-label="Tìm kiếm">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
-        </form>
         <NavLink to="/products">Bộ sưu tập</NavLink>
         <NavLink to="/products?category=ao-thun">Áo</NavLink>
         <NavLink to="/products?category=quan-jeans">Quần</NavLink>
