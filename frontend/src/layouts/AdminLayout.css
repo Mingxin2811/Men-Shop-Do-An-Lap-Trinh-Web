@@ -473,6 +473,14 @@
   min-width: 760px;
 }
 
+.admin-orders-table-card .table {
+  min-width: 1080px;
+}
+
+.admin-users-table-card .table {
+  min-width: 980px;
+}
+
 .admin-table-description {
   max-width: 320px;
   color: var(--text-secondary);
@@ -573,6 +581,23 @@
   font-size: 0.82rem;
 }
 
+.admin-status-control {
+  display: grid;
+  gap: 5px;
+  width: 190px;
+  max-width: 100%;
+}
+
+.admin-status-control span {
+  color: var(--mid-gray);
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.admin-status-control .admin-status-select {
+  width: 100%;
+}
+
 .admin-user-filters {
   display: flex;
   gap: 10px;
@@ -606,6 +631,49 @@
 .admin-user-status.locked {
   color: #991b1b;
   background: #fee2e2;
+}
+
+.admin-password-cell {
+  display: grid;
+  grid-template-columns: minmax(92px, 1fr) 30px;
+  align-items: center;
+  gap: 8px;
+  width: min(260px, 100%);
+}
+
+.admin-password-cell code {
+  display: block;
+  min-width: 0;
+  padding: 6px 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #f8fafc;
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-password-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: var(--white);
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.admin-password-toggle:hover {
+  border-color: var(--black);
+  color: var(--black);
+  background: var(--offwhite);
 }
 
 .admin-history-modal {
@@ -955,6 +1023,34 @@
     min-width: 680px;
   }
 
+  .admin-orders-table-card .table {
+    min-width: 960px;
+  }
+
+  .admin-users-table-card .table {
+    min-width: 860px;
+  }
+
+  .admin-orders-table-card .table th,
+  .admin-orders-table-card .table td,
+  .admin-users-table-card .table th,
+  .admin-users-table-card .table td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .admin-status-control {
+    width: 170px;
+  }
+
+  .admin-status-control span {
+    font-size: 0.66rem;
+  }
+
+  .admin-password-cell {
+    width: 220px;
+  }
+
   .admin-row-actions {
     flex-wrap: wrap;
   }
@@ -993,5 +1089,22 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
+  }
+
+  .admin-orders-table-card .table {
+    min-width: 900px;
+  }
+
+  .admin-status-control {
+    width: 155px;
+  }
+
+  .admin-status-select {
+    padding-right: 28px;
+    font-size: 0.78rem;
+  }
+
+  .admin-password-cell {
+    width: 190px;
   }
 }

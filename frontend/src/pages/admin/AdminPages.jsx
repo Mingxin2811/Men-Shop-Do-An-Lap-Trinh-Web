@@ -432,6 +432,7 @@ export function AdminCouponsPage() {
 
 // ── Orders ──────────────────────────────────────────────
 const ORDER_STATUSES = ['PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED'];
+const ORDER_FLOW = ['PENDING', 'CONFIRMED', 'SHIPPING', 'COMPLETED'];
 const STATUS_LABELS = {
   PENDING: 'Chờ xử lý',
   CONFIRMED: 'Đã xác nhận',
@@ -445,6 +446,21 @@ const PAYMENT_LABELS = {
   PAID: 'Đã thanh toán',
   FAILED: 'Thất bại',
   REFUNDED: 'Đã hoàn tiền',
+};
+
+const getOrderStatusOptions = (status) => {
+  if (status === 'CANCELLED') return ['CANCELLED'];
+  if (status === 'COMPLETED') return ['COMPLETED'];
+
+  const currentIndex = ORDER_FLOW.indexOf(status);
+  const nextStatus = ORDER_FLOW[currentIndex + 1];
+  return [status, ...(nextStatus ? [nextStatus] : []), 'CANCELLED'];
+};
+
+const getOrderStatusHelp = (status) => {
+  if (status === 'CANCELLED') return 'Đơn đã hủy, không thể đổi trạng thái.';
+  if (status === 'COMPLETED') return 'Đơn đã hoàn tất, không thể hủy hoặc đổi trạng thái.';
+  return 'Chỉ có thể chuyển sang bước kế tiếp hoặc hủy đơn.';
 };
 
 function OrderDetailModal({ order, onClose }) {
@@ -551,6 +567,7 @@ export function AdminOrdersPage() {
   };
 
   const handleStatusChange = (order, nextStatus) => {
+    if (nextStatus === order.status) return;
     if (nextStatus === 'CANCELLED') {
       setUpdateError('');
       setCancelTarget(order);
@@ -598,7 +615,7 @@ export function AdminOrdersPage() {
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>
       ) : (
-        <div className="admin-table-card">
+        <div className="admin-table-card admin-orders-table-card">
           <table className="table">
             <thead>
               <tr>
@@ -627,17 +644,20 @@ export function AdminOrdersPage() {
                     </span>
                   </td>
                   <td>
-                    <select
-                      className="form-select admin-status-select"
-                      value={order.status}
-                      disabled={updating === order.id || order.status === 'CANCELLED'}
-                      title={order.status === 'CANCELLED' ? 'Đơn đã hủy không thể đổi trạng thái' : ''}
-                      onChange={(event) => handleStatusChange(order, event.target.value)}
-                    >
-                      {ORDER_STATUSES.map((status) => (
-                        <option key={status} value={status}>{STATUS_LABELS[status]}</option>
-                      ))}
-                    </select>
+                    <div className="admin-status-control">
+                      <select
+                        className="form-select admin-status-select"
+                        value={order.status}
+                        disabled={updating === order.id || ['CANCELLED', 'COMPLETED'].includes(order.status)}
+                        title={getOrderStatusHelp(order.status)}
+                        onChange={(event) => handleStatusChange(order, event.target.value)}
+                      >
+                        {getOrderStatusOptions(order.status).map((status) => (
+                          <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                        ))}
+                      </select>
+                      <span>{getOrderStatusHelp(order.status)}</span>
+                    </div>
                   </td>
                   <td>
                     <button className="btn btn-outline btn-sm" onClick={() => setDetailTarget(order)}>
@@ -667,6 +687,7 @@ export function AdminUsersPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState('');
   const [orderDetail, setOrderDetail] = useState(null);
+  const [visiblePasswords, setVisiblePasswords] = useState({});
 
   const loadUsers = async (searchValue = search, statusValue = statusFilter) => {
     setLoading(true);
@@ -816,11 +837,11 @@ export function AdminUsersPage() {
       {loading ? (
         <div className="loading-center"><div className="spinner spinner-lg" /></div>
       ) : (
-        <div className="admin-table-card">
+        <div className="admin-table-card admin-users-table-card">
           <table className="table">
             <thead>
               <tr>
-                <th>Tên</th><th>Email</th><th>SĐT</th><th>Ngày đăng ký</th>
+                <th>Tên</th><th>Email</th><th>Mật khẩu</th><th>SĐT</th><th>Ngày đăng ký</th>
                 <th>Trạng thái</th><th>Hành động</th>
               </tr>
             </thead>
@@ -829,6 +850,37 @@ export function AdminUsersPage() {
                 <tr key={user.id}>
                   <td className="font-medium">{user.name}</td>
                   <td>{user.email}</td>
+                  <td>
+                    <div className="admin-password-cell">
+                      <code title={visiblePasswords[user.id] ? 'Mật khẩu đã mã hóa bằng bcrypt' : undefined}>
+                        {visiblePasswords[user.id] ? user.password : '••••••••'}
+                      </code>
+                      <button
+                        type="button"
+                        className="admin-password-toggle"
+                        onClick={() => setVisiblePasswords((current) => ({
+                          ...current,
+                          [user.id]: !current[user.id],
+                        }))}
+                        aria-label={visiblePasswords[user.id] ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        title={visiblePasswords[user.id] ? 'Ẩn mật khẩu đã mã hóa' : 'Hiện mật khẩu đã mã hóa'}
+                      >
+                        {visiblePasswords[user.id] ? (
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                            <path d="M3 3l18 18" />
+                            <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                            <path d="M9.5 5.4A9.6 9.6 0 0 1 12 5c5 0 8.5 4.5 9.5 7a12.7 12.7 0 0 1-2.5 3.6" />
+                            <path d="M6.3 6.7A13.2 13.2 0 0 0 2.5 12c1 2.5 4.5 7 9.5 7a9.5 9.5 0 0 0 4-.9" />
+                          </svg>
+                        ) : (
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                            <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7S18 19 12 19s-9.5-7-9.5-7z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </td>
                   <td className="admin-cell-muted">{user.phone || '—'}</td>
                   <td className="admin-cell-muted">{formatDate(user.createdAt)}</td>
                   <td>

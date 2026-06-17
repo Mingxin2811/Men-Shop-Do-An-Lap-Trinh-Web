@@ -111,6 +111,7 @@ const getUsers = async (req, res, next) => {
           id: true,
           name: true,
           email: true,
+          password: true,
           phone: true,
           address: true,
           isActive: true,

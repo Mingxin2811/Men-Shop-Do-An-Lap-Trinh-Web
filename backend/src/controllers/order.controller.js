@@ -237,6 +237,7 @@ const updateOrderStatus = async (req, res, next) => {
     const { id } = req.params;
     const { status } = req.body;
     const allowedStatuses = ["PENDING", "CONFIRMED", "SHIPPING", "COMPLETED", "CANCELLED"];
+    const forwardStatuses = ["PENDING", "CONFIRMED", "SHIPPING", "COMPLETED"];
 
     if (!allowedStatuses.includes(status)) {
       return errorResponse(res, "Trang thai don hang khong hop le", 400);
@@ -250,8 +251,28 @@ const updateOrderStatus = async (req, res, next) => {
       return errorResponse(res, "Khong tim thay don hang", 404);
     }
 
+    if (existingOrder.status === status) {
+      return successResponse(res, "Trang thai don hang khong thay doi", existingOrder);
+    }
+
     if (existingOrder.status === "CANCELLED" && status !== "CANCELLED") {
       return errorResponse(res, "Don hang da huy khong the chuyen sang trang thai khac.", 400);
+    }
+
+    if (existingOrder.status === "COMPLETED" && status !== "COMPLETED") {
+      return errorResponse(res, "Don hang da hoan tat khong the doi trang thai hoac huy.", 400);
+    }
+
+    if (status !== "CANCELLED") {
+      const currentIndex = forwardStatuses.indexOf(existingOrder.status);
+      const nextStatus = forwardStatuses[currentIndex + 1];
+      if (status !== nextStatus) {
+        return errorResponse(
+          res,
+          "Chi co the chuyen trang thai don hang theo dung thu tu tiep theo.",
+          400
+        );
+      }
     }
 
     const isCancelling =
