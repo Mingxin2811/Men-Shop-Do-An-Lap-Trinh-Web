@@ -1,5 +1,4 @@
 .blog-page {
-  padding-top: calc(64px + var(--spacing-xl));
   padding-bottom: var(--spacing-3xl);
   min-height: 70vh;
 }
