@@ -28,6 +28,7 @@ const strongPassword = (field, label = "Mật khẩu") =>
 
 router.post(
   "/register/request-otp",
+  authLimiter,
   [
     body("name").trim().notEmpty().withMessage("Tên là bắt buộc"),
     body("email").isEmail().withMessage("Email không hợp lệ"),

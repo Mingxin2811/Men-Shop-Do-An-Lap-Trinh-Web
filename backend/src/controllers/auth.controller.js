@@ -9,6 +9,9 @@ const OTP_TTL_MS = 10 * 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 const hashValue = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
 const createOtp = () => String(crypto.randomInt(100000, 1000000));
+const shouldExposeDevOtp = () =>
+  process.env.EMAIL_DEV_MODE === "true" &&
+  (process.env.NODE_ENV !== "production" || process.env.OTP_EXPOSE_IN_RESPONSE === "true");
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
@@ -88,7 +91,7 @@ const saveAndSendOtp = async ({ email, name, purpose }) => {
     return {
       devOtp:
         result?.skipped &&
-        process.env.EMAIL_DEV_MODE === "true"
+        shouldExposeDevOtp()
           ? code
           : undefined
     };
@@ -399,7 +402,12 @@ const resetPassword = async (req, res, next) => {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
-        data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
+        data: {
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null,
+          ...(user.googleId ? { authProvider: "LOCAL_GOOGLE" } : {})
+        }
       }),
       prisma.otpCode.delete({ where: { id: verification.record.id } })
     ]);

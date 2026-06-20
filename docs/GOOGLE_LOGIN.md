@@ -77,7 +77,24 @@ Các biến cũ vẫn cần:
 CLIENT_URL=http://localhost:5173
 API_URL=http://localhost:5000
 JWT_SECRET=replace_with_a_long_random_secret
+EMAIL_DEV_MODE=true
+OTP_EXPOSE_IN_RESPONSE=false
 ```
+
+Nếu muốn gửi OTP qua Gmail thật, đổi sang:
+
+```env
+MAIL_FROM=Men's Shop
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=<gmail-gui-otp>
+SMTP_PASS=<google-app-password-16-ky-tu>
+EMAIL_DEV_MODE=false
+OTP_EXPOSE_IN_RESPONSE=false
+```
+
+`SMTP_PASS` là Google App Password, không phải mật khẩu đăng nhập Gmail thường.
 
 ## 4. Cấu hình Google Cloud Console
 
@@ -250,3 +267,41 @@ Sau khi thêm tính năng Google Login, cần làm lại các phần sau:
 5. Redeploy frontend nếu `VITE_API_URL` hoặc domain frontend thay đổi.
 6. Nếu chạy Docker, rebuild container backend/frontend.
 
+## 10. Ghi chú OTP khi deploy
+
+Nếu dùng Gmail thật khi deploy backend, cấu hình thêm các biến sau trên Render/Railway/Koyeb:
+
+```env
+MAIL_FROM=Men's Shop
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=<gmail-gui-otp>
+SMTP_PASS=<google-app-password-16-ky-tu>
+EMAIL_DEV_MODE=false
+OTP_EXPOSE_IN_RESPONSE=false
+```
+
+Sau đó redeploy backend. Frontend và database không cần redeploy chỉ vì đổi SMTP, trừ khi bạn cũng đổi `VITE_API_URL`, domain hoặc có migration mới.
+
+Nên kiểm tra SMTP trước/sau deploy bằng:
+
+```powershell
+cd backend
+npm run mail:verify
+```
+
+Nếu không dùng Gmail thật, giữ:
+
+```env
+EMAIL_DEV_MODE=true
+OTP_EXPOSE_IN_RESPONSE=false
+```
+
+Khi đó mã OTP đăng ký/quên mật khẩu sẽ được in trong log backend, không trả về frontend. Cách này an toàn hơn khi deploy public.
+
+Nếu chỉ demo kín và muốn frontend hiện mã OTP như local, đặt:
+
+```env
+OTP_EXPOSE_IN_RESPONSE=true
+```
