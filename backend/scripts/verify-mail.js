@@ -4,9 +4,9 @@ const { verifyMailConnection } = require("../src/utils/mailer");
 
 verifyMailConnection()
   .then(() => {
-    console.log("Kết nối SMTP thành công.");
+    console.log("Cau hinh email hop le.");
   })
   .catch((error) => {
-    console.error(`Kết nối SMTP thất bại: ${error.message}`);
+    console.error(`Cau hinh email chua hop le: ${error.message}`);
     process.exit(1);
   });

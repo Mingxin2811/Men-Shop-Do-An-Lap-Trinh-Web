@@ -275,6 +275,13 @@ cd backend
 npm run mail:verify
 ```
 
+Gửi thử một email thật tới địa chỉ nhận cụ thể:
+
+```powershell
+cd backend
+npm run mail:test -- your-email@gmail.com
+```
+
 Nếu chỉ demo local không muốn gửi email thật:
 
 ```env
@@ -646,6 +653,7 @@ CLIENT_URL=https://mens-shop-rose.vercel.app,https://preview-domain.vercel.app
 - Nếu muốn gửi qua Resend, đặt `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_DEV_MODE=false`.
 - Nếu dùng `onboarding@resend.dev`, Resend có thể giới hạn người nhận khi tài khoản/domain chưa verify. Muốn gửi cho người dùng bất kỳ, hãy verify domain.
 - Test bằng `npm run mail:verify`.
+- Test gửi thật bằng `npm run mail:test -- your-email@gmail.com`.
 - Trên deploy, admin có thể gọi `GET /api/admin/mail-status?verify=true` kèm Bearer token admin để kiểm tra cấu hình email ngay trên server hosting.
 - Nếu gửi OTP cứ quay mãi, đặt `MAIL_TIMEOUT_MS=15000` và redeploy backend để request trả lỗi sau khoảng 15 giây thay vì chờ quá lâu.
 
