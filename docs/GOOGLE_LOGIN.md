@@ -81,20 +81,18 @@ EMAIL_DEV_MODE=true
 OTP_EXPOSE_IN_RESPONSE=false
 ```
 
-Nếu muốn gửi OTP qua Gmail thật, đổi sang:
+Nếu muốn gửi OTP qua Resend khi deploy, đổi sang:
 
 ```env
-MAIL_FROM=Men's Shop
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=<gmail-gui-otp>
-SMTP_PASS=<google-app-password-16-ky-tu>
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=<resend-api-key>
+RESEND_FROM=Men's Shop <otp@your-verified-domain.com>
+MAIL_TIMEOUT_MS=15000
 EMAIL_DEV_MODE=false
 OTP_EXPOSE_IN_RESPONSE=false
 ```
 
-`SMTP_PASS` là Google App Password, không phải mật khẩu đăng nhập Gmail thường.
+Khi test nhanh có thể dùng `onboarding@resend.dev`, nhưng để gửi thật cho nhiều người nhận nên verify domain trong Resend.
 
 ## 4. Cấu hình Google Cloud Console
 
@@ -285,22 +283,20 @@ Sau khi thêm tính năng Google Login, cần làm lại các phần sau:
 
 ## 10. Ghi chú OTP khi deploy
 
-Nếu dùng Gmail thật khi deploy backend, cấu hình thêm các biến sau trên Render/Railway/Koyeb:
+Nếu dùng Resend khi deploy backend, cấu hình thêm các biến sau trên Render/Railway/Koyeb:
 
 ```env
-MAIL_FROM=Men's Shop
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=<gmail-gui-otp>
-SMTP_PASS=<google-app-password-16-ky-tu>
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=<resend-api-key>
+RESEND_FROM=Men's Shop <otp@your-verified-domain.com>
+MAIL_TIMEOUT_MS=15000
 EMAIL_DEV_MODE=false
 OTP_EXPOSE_IN_RESPONSE=false
 ```
 
-Sau đó redeploy backend. Frontend và database không cần redeploy chỉ vì đổi SMTP, trừ khi bạn cũng đổi `VITE_API_URL`, domain hoặc có migration mới.
+Sau đó redeploy backend. Frontend và database không cần redeploy chỉ vì đổi provider gửi mail, trừ khi bạn cũng đổi `VITE_API_URL`, domain hoặc có migration mới.
 
-Nên kiểm tra SMTP trước/sau deploy bằng:
+Nên kiểm tra cấu hình email trước/sau deploy bằng:
 
 ```powershell
 cd backend

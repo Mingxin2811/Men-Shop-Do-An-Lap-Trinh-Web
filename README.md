@@ -149,6 +149,11 @@ STRIPE_WEBHOOK_SECRET=whsec_replace_me
 STRIPE_SUCCESS_URL=http://localhost:5173/payment-success
 STRIPE_CANCEL_URL=http://localhost:5173/payment-cancel
 
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=
+RESEND_FROM=Men's Shop <onboarding@resend.dev>
+MAIL_TIMEOUT_MS=15000
+
 MAIL_FROM=Men's Shop
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -169,9 +174,9 @@ Ghi chú:
 - `JWT_SECRET` phải là chuỗi bí mật dài, không dùng giá trị mẫu khi deploy.
 - `CLIENT_URL` là domain frontend được phép gọi API. Production có thể dùng nhiều domain, cách nhau bằng dấu phẩy.
 - `API_URL` là domain backend public, dùng cho callback/redirect.
-- `SMTP_USER` là Gmail dùng để gửi OTP.
-- `SMTP_PASS` là Google App Password 16 ký tự, không phải mật khẩu Gmail thường.
-- `EMAIL_DEV_MODE=false` để gửi OTP thật qua SMTP.
+- `RESEND_API_KEY` là API key tạo trong Resend.
+- `RESEND_FROM` là địa chỉ gửi mail. Khi gửi thật cho nhiều email, nên dùng domain đã verify trong Resend.
+- `EMAIL_DEV_MODE=false` để gửi OTP thật qua Resend/SMTP.
 - `EMAIL_DEV_MODE=true` để không gửi email thật, OTP được in ra log backend.
 - `OTP_EXPOSE_IN_RESPONSE=false` để không trả OTP về frontend.
 - Không commit các file `.env` thật lên GitHub.
@@ -243,39 +248,34 @@ Frontend chạy tại:
 http://localhost:5173
 ```
 
-## OTP qua Gmail thật
+## OTP qua Resend
 
-Để gửi OTP đăng ký/quên mật khẩu qua Gmail thật, backend cần:
+Để gửi OTP đăng ký/quên mật khẩu qua Resend, backend cần:
 
 ```env
-MAIL_FROM=Men's Shop
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_TIMEOUT_MS=15000
-SMTP_USER=<gmail-gui-otp>
-SMTP_PASS=<google-app-password-16-ky-tu>
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=<resend-api-key>
+RESEND_FROM=Men's Shop <onboarding@resend.dev>
+MAIL_TIMEOUT_MS=15000
 EMAIL_DEV_MODE=false
 OTP_EXPOSE_IN_RESPONSE=false
 ```
 
-Cách lấy `SMTP_PASS`:
+Cách cấu hình Resend:
 
-1. Đăng nhập Gmail muốn dùng để gửi OTP.
-2. Vào Google Account.
-3. Bật 2-Step Verification.
-4. Vào App Passwords.
-5. Tạo app password cho dự án, ví dụ `Mens Shop OTP`.
-6. Copy mã 16 ký tự vào `SMTP_PASS`.
+1. Tạo tài khoản tại Resend.
+2. Vào API Keys, tạo API key và copy vào `RESEND_API_KEY`.
+3. Khi test nhanh có thể dùng `RESEND_FROM=Men's Shop <onboarding@resend.dev>`.
+4. Khi gửi thật cho người dùng bất kỳ, nên verify domain trong Resend rồi đổi `RESEND_FROM`, ví dụ `Men's Shop <otp@yourdomain.com>`.
 
-Test SMTP:
+Kiểm tra cấu hình email local:
 
 ```powershell
 cd backend
 npm run mail:verify
 ```
 
-Nếu chỉ demo local không muốn gửi Gmail thật:
+Nếu chỉ demo local không muốn gửi email thật:
 
 ```env
 EMAIL_DEV_MODE=true
@@ -497,7 +497,7 @@ https://mens-shop-api-1txr.onrender.com/api
 - Payments: `/api/payments`
 - Blog/posts: `/api/posts`
 - Admin: `/api/admin`
-- Kiểm tra SMTP admin: `GET /api/admin/mail-status?verify=true`
+- Kiểm tra cấu hình email admin: `GET /api/admin/mail-status?verify=true`
 
 ## Luồng thanh toán online mô phỏng
 
@@ -558,13 +558,10 @@ GOOGLE_CLIENT_ID=<client-id>
 GOOGLE_CLIENT_SECRET=<client-secret>
 GOOGLE_CALLBACK_URL=https://mens-shop-api-1txr.onrender.com/api/auth/google/callback
 
-MAIL_FROM=Men's Shop
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_TIMEOUT_MS=15000
-SMTP_USER=<gmail-gui-otp>
-SMTP_PASS=<google-app-password>
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=<resend-api-key>
+RESEND_FROM=Men's Shop <otp@your-verified-domain.com>
+MAIL_TIMEOUT_MS=15000
 EMAIL_DEV_MODE=false
 OTP_EXPOSE_IN_RESPONSE=false
 
@@ -607,7 +604,7 @@ Sau khi deploy:
 - Frontend gọi API production, không gọi `localhost`.
 - Đăng nhập email/mật khẩu được.
 - Đăng nhập Google quay về `https://mens-shop-rose.vercel.app`, không quay về local.
-- OTP đăng ký/quên mật khẩu gửi Gmail thật nếu `EMAIL_DEV_MODE=false`.
+- OTP đăng ký/quên mật khẩu gửi qua Resend nếu `EMAIL_DEV_MODE=false`.
 - Giỏ hàng, checkout COD và payment mock hoạt động.
 - Admin vào dashboard được.
 
@@ -646,12 +643,11 @@ CLIENT_URL=https://mens-shop-rose.vercel.app,https://preview-domain.vercel.app
 ### OTP không gửi email thật
 
 - Nếu `EMAIL_DEV_MODE=true`, backend chỉ log OTP.
-- Nếu muốn gửi Gmail thật, đặt `EMAIL_DEV_MODE=false`.
-- Gmail phải dùng App Password, không dùng mật khẩu Gmail thường.
+- Nếu muốn gửi qua Resend, đặt `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_DEV_MODE=false`.
+- Nếu dùng `onboarding@resend.dev`, Resend có thể giới hạn người nhận khi tài khoản/domain chưa verify. Muốn gửi cho người dùng bất kỳ, hãy verify domain.
 - Test bằng `npm run mail:verify`.
-- Trên deploy, admin có thể gọi `GET /api/admin/mail-status?verify=true` kèm Bearer token admin để kiểm tra SMTP ngay trên server hosting.
-- Nếu `passwordHadWhitespace=true`, backend đã tự bỏ khoảng trắng trong `SMTP_PASS`, nhưng vẫn nên lưu App Password trên hosting ở dạng liền 16 ký tự.
-- Nếu gửi OTP cứ quay mãi, đặt `SMTP_TIMEOUT_MS=15000` và redeploy backend để request trả lỗi sau khoảng 15 giây thay vì chờ quá lâu.
+- Trên deploy, admin có thể gọi `GET /api/admin/mail-status?verify=true` kèm Bearer token admin để kiểm tra cấu hình email ngay trên server hosting.
+- Nếu gửi OTP cứ quay mãi, đặt `MAIL_TIMEOUT_MS=15000` và redeploy backend để request trả lỗi sau khoảng 15 giây thay vì chờ quá lâu.
 
 ### API mới bị 404 sau deploy
 

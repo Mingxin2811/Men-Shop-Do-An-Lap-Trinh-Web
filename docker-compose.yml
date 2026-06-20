@@ -30,6 +30,10 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
       API_URL: ${API_URL:-http://localhost:5000}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-Men's Shop <onboarding@resend.dev>}
+      MAIL_TIMEOUT_MS: ${MAIL_TIMEOUT_MS:-15000}
       MAIL_FROM: ${MAIL_FROM:-Men's Shop}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}

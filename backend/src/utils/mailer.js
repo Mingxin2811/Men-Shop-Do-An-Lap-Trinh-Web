@@ -2,6 +2,10 @@ const nodemailer = require("nodemailer");
 
 let transporter;
 const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS) || 15000;
+const RESEND_API_URL = "https://api.resend.com/emails";
+const RESEND_DOMAINS_URL = "https://api.resend.com/domains";
+const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || (process.env.RESEND_API_KEY ? "resend" : "smtp")).toLowerCase();
+const MAIL_TIMEOUT_MS = Number(process.env.MAIL_TIMEOUT_MS) || SMTP_TIMEOUT_MS;
 
 const normalizeSmtpPass = (value) => String(value || "").replace(/\s+/g, "");
 const maskEmail = (email) => {
@@ -13,10 +17,16 @@ const maskEmail = (email) => {
 const getMailConfigStatus = () => {
   const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, EMAIL_DEV_MODE } = process.env;
   const normalizedPass = normalizeSmtpPass(SMTP_PASS);
+  const resendFrom = process.env.RESEND_FROM || null;
 
   return {
+    provider: EMAIL_PROVIDER,
     devMode: EMAIL_DEV_MODE === "true",
     exposeOtpInResponse: process.env.OTP_EXPOSE_IN_RESPONSE === "true",
+    resend: {
+      hasApiKey: Boolean(process.env.RESEND_API_KEY),
+      from: resendFrom
+    },
     host: SMTP_HOST || null,
     port: Number(SMTP_PORT) || 587,
     secure: SMTP_SECURE === "true" || Number(SMTP_PORT) === 465,
@@ -25,7 +35,8 @@ const getMailConfigStatus = () => {
     hasPassword: Boolean(normalizedPass),
     passwordHadWhitespace: Boolean(SMTP_PASS && SMTP_PASS !== normalizedPass),
     readyForSmtp: Boolean(SMTP_HOST && SMTP_USER && normalizedPass),
-    timeoutMs: SMTP_TIMEOUT_MS
+    readyForResend: Boolean(process.env.RESEND_API_KEY && resendFrom),
+    timeoutMs: MAIL_TIMEOUT_MS
   };
 };
 
@@ -52,6 +63,82 @@ const getTransporter = () => {
   return transporter;
 };
 
+const sendResendMail = async ({ to, subject, html, text }) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM;
+
+  if (!apiKey) throw new Error("RESEND_API_KEY chua duoc cau hinh.");
+  if (!from) throw new Error("RESEND_FROM chua duoc cau hinh.");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MAIL_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        html,
+        text
+      }),
+      signal: controller.signal
+    });
+
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message = data?.message || data?.error || JSON.stringify(data) || response.statusText;
+      throw new Error(`Resend ${response.status}: ${message}`);
+    }
+
+    return data;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`Resend timeout sau ${MAIL_TIMEOUT_MS}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const verifyResendConnection = async () => {
+  if (!process.env.RESEND_API_KEY) throw new Error("Thieu RESEND_API_KEY.");
+  if (!process.env.RESEND_FROM) throw new Error("Thieu RESEND_FROM.");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MAIL_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(RESEND_DOMAINS_URL, {
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      signal: controller.signal
+    });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message = data?.message || data?.error || JSON.stringify(data) || response.statusText;
+      throw new Error(`Resend ${response.status}: ${message}`);
+    }
+
+    return true;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`Resend timeout sau ${MAIL_TIMEOUT_MS}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 // Gui email. Neu chua cau hinh SMTP -> log ra console (che do dev), khong loi.
 const sendMail = async ({ to, subject, html, text }) => {
   const senderName = process.env.MAIL_FROM || "Men's Shop";
@@ -68,6 +155,10 @@ const sendMail = async ({ to, subject, html, text }) => {
     return { skipped: true };
   }
 
+  if (EMAIL_PROVIDER === "resend" || process.env.RESEND_API_KEY) {
+    return sendResendMail({ to, subject, html, text });
+  }
+
   const t = getTransporter();
 
   if (!t) {
@@ -80,6 +171,10 @@ const sendMail = async ({ to, subject, html, text }) => {
 };
 
 const verifyMailConnection = async () => {
+  if (EMAIL_PROVIDER === "resend" || process.env.RESEND_API_KEY) {
+    return verifyResendConnection();
+  }
+
   const t = getTransporter();
   if (!t) {
     throw new Error("Thiếu SMTP_USER hoặc SMTP_PASS trong backend/.env.");

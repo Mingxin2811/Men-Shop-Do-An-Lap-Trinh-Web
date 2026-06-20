@@ -195,17 +195,17 @@ const getMailStatus = async (req, res, next) => {
     const shouldVerify = req.query.verify === "true";
 
     if (!shouldVerify) {
-      return successResponse(res, "Lay cau hinh SMTP thanh cong", status);
+      return successResponse(res, "Lay cau hinh email thanh cong", status);
     }
 
     try {
       await verifyMailConnection();
-      return successResponse(res, "Ket noi SMTP thanh cong", {
+      return successResponse(res, "Cau hinh email hop le", {
         ...status,
         verified: true
       });
     } catch (error) {
-      return successResponse(res, "Ket noi SMTP that bai", {
+      return successResponse(res, "Cau hinh email chua hop le", {
         ...status,
         verified: false,
         error: error.message
