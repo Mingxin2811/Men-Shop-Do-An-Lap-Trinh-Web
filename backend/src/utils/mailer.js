@@ -1,6 +1,7 @@
 const nodemailer = require("nodemailer");
 
 let transporter;
+const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS) || 15000;
 
 const normalizeSmtpPass = (value) => String(value || "").replace(/\s+/g, "");
 const maskEmail = (email) => {
@@ -23,7 +24,8 @@ const getMailConfigStatus = () => {
     hasUser: Boolean(SMTP_USER),
     hasPassword: Boolean(normalizedPass),
     passwordHadWhitespace: Boolean(SMTP_PASS && SMTP_PASS !== normalizedPass),
-    readyForSmtp: Boolean(SMTP_HOST && SMTP_USER && normalizedPass)
+    readyForSmtp: Boolean(SMTP_HOST && SMTP_USER && normalizedPass),
+    timeoutMs: SMTP_TIMEOUT_MS
   };
 };
 
@@ -39,6 +41,9 @@ const getTransporter = () => {
       port,
       secure: SMTP_SECURE === "true" || port === 465,
       requireTLS: port === 587,
+      connectionTimeout: SMTP_TIMEOUT_MS,
+      greetingTimeout: SMTP_TIMEOUT_MS,
+      socketTimeout: SMTP_TIMEOUT_MS,
       auth: { user: SMTP_USER, pass: smtpPass }
     });
   } else {

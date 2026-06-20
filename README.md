@@ -153,6 +153,7 @@ MAIL_FROM=Men's Shop
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
+SMTP_TIMEOUT_MS=15000
 SMTP_USER=
 SMTP_PASS=
 EMAIL_DEV_MODE=false
@@ -251,6 +252,7 @@ MAIL_FROM=Men's Shop
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
+SMTP_TIMEOUT_MS=15000
 SMTP_USER=<gmail-gui-otp>
 SMTP_PASS=<google-app-password-16-ky-tu>
 EMAIL_DEV_MODE=false
@@ -560,6 +562,7 @@ MAIL_FROM=Men's Shop
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
+SMTP_TIMEOUT_MS=15000
 SMTP_USER=<gmail-gui-otp>
 SMTP_PASS=<google-app-password>
 EMAIL_DEV_MODE=false
@@ -648,6 +651,7 @@ CLIENT_URL=https://mens-shop-rose.vercel.app,https://preview-domain.vercel.app
 - Test bằng `npm run mail:verify`.
 - Trên deploy, admin có thể gọi `GET /api/admin/mail-status?verify=true` kèm Bearer token admin để kiểm tra SMTP ngay trên server hosting.
 - Nếu `passwordHadWhitespace=true`, backend đã tự bỏ khoảng trắng trong `SMTP_PASS`, nhưng vẫn nên lưu App Password trên hosting ở dạng liền 16 ký tự.
+- Nếu gửi OTP cứ quay mãi, đặt `SMTP_TIMEOUT_MS=15000` và redeploy backend để request trả lỗi sau khoảng 15 giây thay vì chờ quá lâu.
 
 ### API mới bị 404 sau deploy
 
