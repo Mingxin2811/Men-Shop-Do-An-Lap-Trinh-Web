@@ -6,6 +6,7 @@ services:
     environment:
       CLIENT_URL: http://localhost:5174
       API_URL: http://localhost:5001
+      GOOGLE_CALLBACK_URL: http://localhost:5001/api/auth/google/callback
       STRIPE_SUCCESS_URL: http://localhost:5174/payment-success
       STRIPE_CANCEL_URL: http://localhost:5174/payment-cancel
     ports: !override

@@ -4,6 +4,8 @@ const {
   requestRegistrationOtp,
   register,
   login,
+  googleLogin,
+  googleCallback,
   getMe,
   updateProfile,
   changePassword,
@@ -135,6 +137,9 @@ router.post(
   validate,
   login
 );
+
+router.get("/google", authLimiter, googleLogin);
+router.get("/google/callback", googleCallback);
 
 /**
  * @swagger

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/auth.service';
@@ -22,6 +22,19 @@ function AuthBanner({ image, alt, children }) {
   );
 }
 
+function GoogleLoginButton({ disabled = false }) {
+  const handleGoogleLogin = () => {
+    window.location.href = authService.getGoogleLoginUrl();
+  };
+
+  return (
+    <button type="button" className="auth-google-btn" onClick={handleGoogleLogin} disabled={disabled}>
+      <span className="auth-google-mark">G</span>
+      <span>Đăng nhập với Google</span>
+    </button>
+  );
+}
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -30,6 +43,14 @@ export function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const googleError = new URLSearchParams(location.search).get('googleError');
+  const googleErrorMessage = googleError
+    ? {
+        missing_code: 'Google không trả về mã xác thực.',
+        email_not_verified: 'Email Google chưa được xác minh.',
+        blocked: 'Tài khoản đang bị khóa.',
+      }[googleError] || 'Đăng nhập Google thất bại.'
+    : '';
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -58,7 +79,11 @@ export function LoginPage() {
 
           {location.state?.reset && <div className="alert alert-success">Đặt lại mật khẩu thành công. Vui lòng đăng nhập.</div>}
           {location.state?.registered && <div className="alert alert-success">Đăng ký thành công. Vui lòng đăng nhập.</div>}
+          {googleErrorMessage && <div className="alert alert-error">{googleErrorMessage}</div>}
           {error && <div className="alert alert-error">{error}</div>}
+
+          <GoogleLoginButton disabled={loading} />
+          <div className="auth-divider"><span>hoặc</span></div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -183,6 +208,13 @@ export function RegisterPage() {
 
           {notice && <div className="alert alert-success">{notice}</div>}
           {error && <div className="alert alert-error">{error}</div>}
+
+          {!otpSent && (
+            <>
+              <GoogleLoginButton disabled={loading} />
+              <div className="auth-divider"><span>hoặc</span></div>
+            </>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -407,6 +439,53 @@ export function ForgotPasswordPage() {
             )}
           </form>
           <p className="auth-switch"><Link to="/login">← Về đăng nhập</Link></p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function GoogleCallbackPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { updateUser } = useAuth();
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (!token) {
+      setError('Không nhận được token đăng nhập Google.');
+      return;
+    }
+
+    localStorage.setItem('token', token);
+    authService.getMe()
+      .then((response) => {
+        const user = response.data.data.user;
+        localStorage.setItem('user', JSON.stringify(user));
+        updateUser(user);
+        navigate(user.role === 'ADMIN' ? '/admin' : '/', { replace: true });
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setError('Không thể hoàn tất đăng nhập Google.');
+      });
+  }, [location.search, navigate, updateUser]);
+
+  return (
+    <div className="auth-page">
+      <AuthBanner image={loginImage} alt="Thời trang nam">
+        Đăng nhập<br />Google
+      </AuthBanner>
+      <div className="auth-form-wrap">
+        <div className="auth-form text-center">
+          <div className="auth-logo"><Link to="/"><span>MEN&apos;S SHOP</span></Link></div>
+          <h1>Đang xác thực</h1>
+          <p className="auth-subtitle">Vui lòng chờ trong giây lát.</p>
+          {error ? <div className="alert alert-error">{error}</div> : <span className="spinner spinner-lg" />}
+          {error && <p className="auth-switch"><Link to="/login">Quay lại đăng nhập</Link></p>}
         </div>
       </div>
     </div>

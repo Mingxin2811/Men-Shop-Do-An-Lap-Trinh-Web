@@ -9,6 +9,9 @@ const OTP_TTL_MS = 10 * 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 const hashValue = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
 const createOtp = () => String(crypto.randomInt(100000, 1000000));
+const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 
 const userSelect = {
   id: true,
@@ -21,6 +24,45 @@ const userSelect = {
   isActive: true,
   createdAt: true,
   updatedAt: true
+};
+
+const toSafeUser = (user) => {
+  const {
+    password: _password,
+    resetToken: _resetToken,
+    resetTokenExpiry: _resetTokenExpiry,
+    googleId: _googleId,
+    ...safeUser
+  } = user;
+  return safeUser;
+};
+
+const getFirstUrl = (value, fallback) =>
+  (value || fallback)
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean)[0];
+
+const getApiUrl = (req) =>
+  getFirstUrl(process.env.API_URL, `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+
+const getClientUrl = () => getFirstUrl(process.env.CLIENT_URL, "http://localhost:5173").replace(/\/$/, "");
+
+const getGoogleCallbackUrl = (req) =>
+  process.env.GOOGLE_CALLBACK_URL || `${getApiUrl(req)}/api/auth/google/callback`;
+
+const ensureGoogleConfig = (req) => {
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    const error = new Error("Google Login chua duoc cau hinh. Thieu GOOGLE_CLIENT_ID hoac GOOGLE_CLIENT_SECRET.");
+    error.statusCode = 500;
+    throw error;
+  }
+  return {
+    clientId: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    callbackUrl: getGoogleCallbackUrl(req)
+  };
 };
 
 const saveAndSendOtp = async ({ email, name, purpose }) => {
@@ -151,7 +193,7 @@ const login = async (req, res, next) => {
     const { email, password } = req.body;
     const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
       return errorResponse(res, "Email hoặc mật khẩu không đúng.", 401);
     }
     if (!user.isActive) {
@@ -159,8 +201,108 @@ const login = async (req, res, next) => {
     }
 
     const token = generateToken(user);
-    const { password: _password, ...safeUser } = user;
-    return successResponse(res, "Đăng nhập thành công.", { token, user: safeUser });
+    return successResponse(res, "Đăng nhập thành công.", { token, user: toSafeUser(user) });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const googleLogin = async (req, res, next) => {
+  try {
+    const { clientId, callbackUrl } = ensureGoogleConfig(req);
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: callbackUrl,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "select_account"
+    });
+
+    return res.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const googleCallback = async (req, res, next) => {
+  try {
+    const { code } = req.query;
+    if (!code) {
+      return res.redirect(`${getClientUrl()}/login?googleError=missing_code`);
+    }
+
+    const { clientId, clientSecret, callbackUrl } = ensureGoogleConfig(req);
+    const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: callbackUrl,
+        grant_type: "authorization_code"
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error("Khong the xac thuc voi Google.");
+    }
+
+    const tokenData = await tokenResponse.json();
+    const profileResponse = await fetch(GOOGLE_USERINFO_URL, {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+
+    if (!profileResponse.ok) {
+      throw new Error("Khong the lay thong tin tai khoan Google.");
+    }
+
+    const profile = await profileResponse.json();
+    if (!profile.email || profile.email_verified === false) {
+      return res.redirect(`${getClientUrl()}/login?googleError=email_not_verified`);
+    }
+
+    const email = profile.email.toLowerCase().trim();
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId: profile.sub },
+          { email }
+        ]
+      }
+    });
+
+    if (user) {
+      if (!user.isActive) {
+        return res.redirect(`${getClientUrl()}/login?googleError=blocked`);
+      }
+      if (!user.googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId: profile.sub,
+            authProvider: user.password ? "LOCAL_GOOGLE" : "GOOGLE",
+            avatar: user.avatar || profile.picture || null
+          }
+        });
+      }
+    } else {
+      user = await prisma.user.create({
+        data: {
+          name: profile.name || email.split("@")[0],
+          email,
+          password: null,
+          avatar: profile.picture || null,
+          googleId: profile.sub,
+          authProvider: "GOOGLE",
+          role: "CUSTOMER"
+        }
+      });
+    }
+
+    const token = generateToken(user);
+    return res.redirect(`${getClientUrl()}/auth/google/callback?token=${encodeURIComponent(token)}`);
   } catch (error) {
     return next(error);
   }
@@ -193,6 +335,9 @@ const changePassword = async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return errorResponse(res, "Không tìm thấy người dùng.", 404);
+    if (!user.password) {
+      return errorResponse(res, "Tai khoan Google chua co mat khau cuc bo. Vui long dung quen mat khau de tao mat khau.", 400);
+    }
     if (!(await bcrypt.compare(currentPassword, user.password))) {
       return errorResponse(res, "Mật khẩu hiện tại không đúng.", 400);
     }
@@ -269,6 +414,8 @@ module.exports = {
   requestRegistrationOtp,
   register,
   login,
+  googleLogin,
+  googleCallback,
   getMe,
   updateProfile,
   changePassword,

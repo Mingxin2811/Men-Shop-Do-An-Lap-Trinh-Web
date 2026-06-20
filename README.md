@@ -7,7 +7,7 @@ Men's Shop là đồ án lập trình web xây dựng website thương mại đi
 - Frontend: React 18, Vite, React Router DOM, Axios, Bootstrap, Context API, CSS thuần.
 - Backend: Node.js, Express.js, Prisma ORM, JWT, bcryptjs, express-validator, nodemailer, swagger-ui-express.
 - Database: PostgreSQL.
-- Auth: JWT, đăng ký bằng OTP email, đăng nhập, quên mật khẩu, đổi mật khẩu.
+- Auth: JWT, đăng ký bằng OTP email, đăng nhập, đăng nhập Google, quên mật khẩu, đổi mật khẩu.
 - Payment: luồng thanh toán online mô phỏng, có trạng thái thanh toán và redirect kết quả.
 - Deploy: Vercel cho frontend, Render cho backend, Neon/Supabase/Render PostgreSQL cho database.
 - Docker: Docker Compose cho môi trường local hoặc deploy Docker.
@@ -692,6 +692,7 @@ Nếu Vercel/Render đang theo dõi `main`, sau khi push hệ thống sẽ tự 
 - [API](./docs/API.md)
 - [Database](./docs/DATABASE.md)
 - [Deployment](./docs/DEPLOYMENT.md)
+- [Google Login](./docs/GOOGLE_LOGIN.md)
 - [Postman testing guide](./docs/postman-testing-guide.md)
 
 ## Ghi chú phát triển tiếp

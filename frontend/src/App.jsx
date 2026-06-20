@@ -22,6 +22,7 @@ const LoginPage = lazy(() => import('./pages/AuthPages').then((module) => ({ def
 const RegisterPage = lazy(() => import('./pages/AuthPages').then((module) => ({ default: module.RegisterPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/AuthPages').then((module) => ({ default: module.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('./pages/AuthPages').then((module) => ({ default: module.ResetPasswordPage })));
+const GoogleCallbackPage = lazy(() => import('./pages/AuthPages').then((module) => ({ default: module.GoogleCallbackPage })));
 const OrderHistoryPage = lazy(() => import('./pages/OrderPages').then((module) => ({ default: module.OrderHistoryPage })));
 const OrderDetailPage = lazy(() => import('./pages/OrderPages').then((module) => ({ default: module.OrderDetailPage })));
 const PaymentCheckoutPage = lazy(() => import('./pages/PaymentPages').then((module) => ({ default: module.PaymentCheckoutPage })));
@@ -60,6 +61,7 @@ export default function App() {
                       <Route path="/register" element={<RegisterPage />} />
                       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                       <Route path="/reset-password" element={<ResetPasswordPage />} />
+                      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
                       <Route path="/payment-success" element={<PaymentSuccessPage />} />
                       <Route path="/payment-cancel" element={<PaymentCancelPage />} />
 

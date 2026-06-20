@@ -4,6 +4,7 @@ export const authService = {
   requestRegistrationOtp: (data) => api.post('/auth/register/request-otp', data),
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  getGoogleLoginUrl: () => `${api.defaults.baseURL}/auth/google`,
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   changePassword: (data) => api.put('/auth/change-password', data),
