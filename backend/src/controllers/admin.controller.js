@@ -1,5 +1,6 @@
 const prisma = require("../config/db");
 const { successResponse, errorResponse } = require("../utils/response");
+const { getMailConfigStatus, verifyMailConnection } = require("../utils/mailer");
 
 const REVENUE_WHERE = {
   OR: [{ status: "COMPLETED" }, { paymentStatus: "PAID" }]
@@ -188,9 +189,37 @@ const updateUserStatus = async (req, res, next) => {
   }
 };
 
+const getMailStatus = async (req, res, next) => {
+  try {
+    const status = getMailConfigStatus();
+    const shouldVerify = req.query.verify === "true";
+
+    if (!shouldVerify) {
+      return successResponse(res, "Lay cau hinh SMTP thanh cong", status);
+    }
+
+    try {
+      await verifyMailConnection();
+      return successResponse(res, "Ket noi SMTP thanh cong", {
+        ...status,
+        verified: true
+      });
+    } catch (error) {
+      return successResponse(res, "Ket noi SMTP that bai", {
+        ...status,
+        verified: false,
+        error: error.message
+      });
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getUsers,
   getUserOrders,
-  updateUserStatus
+  updateUserStatus,
+  getMailStatus
 };

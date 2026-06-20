@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const {
   getDashboardStats,
+  getMailStatus,
   getUsers,
   getUserOrders,
   updateUserStatus
@@ -15,6 +16,7 @@ const router = express.Router();
 router.use(protect, adminOnly);
 
 router.get("/dashboard", getDashboardStats);
+router.get("/mail-status", getMailStatus);
 router.get("/users", getUsers);
 router.get("/users/:id/orders", getUserOrders);
 router.put(

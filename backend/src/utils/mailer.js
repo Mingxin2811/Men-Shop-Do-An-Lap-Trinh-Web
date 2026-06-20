@@ -2,18 +2,44 @@ const nodemailer = require("nodemailer");
 
 let transporter;
 
+const normalizeSmtpPass = (value) => String(value || "").replace(/\s+/g, "");
+const maskEmail = (email) => {
+  if (!email || !email.includes("@")) return null;
+  const [name, domain] = email.split("@");
+  return `${name.slice(0, 2)}***@${domain}`;
+};
+
+const getMailConfigStatus = () => {
+  const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, EMAIL_DEV_MODE } = process.env;
+  const normalizedPass = normalizeSmtpPass(SMTP_PASS);
+
+  return {
+    devMode: EMAIL_DEV_MODE === "true",
+    exposeOtpInResponse: process.env.OTP_EXPOSE_IN_RESPONSE === "true",
+    host: SMTP_HOST || null,
+    port: Number(SMTP_PORT) || 587,
+    secure: SMTP_SECURE === "true" || Number(SMTP_PORT) === 465,
+    user: maskEmail(SMTP_USER),
+    hasUser: Boolean(SMTP_USER),
+    hasPassword: Boolean(normalizedPass),
+    passwordHadWhitespace: Boolean(SMTP_PASS && SMTP_PASS !== normalizedPass),
+    readyForSmtp: Boolean(SMTP_HOST && SMTP_USER && normalizedPass)
+  };
+};
+
 // Khoi tao transporter tu bien moi truong SMTP (neu co).
 const getTransporter = () => {
   if (transporter !== undefined) return transporter;
   const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS } = process.env;
-  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  const smtpPass = normalizeSmtpPass(SMTP_PASS);
+  if (SMTP_HOST && SMTP_USER && smtpPass) {
     const port = Number(SMTP_PORT) || 587;
     transporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port,
       secure: SMTP_SECURE === "true" || port === 465,
       requireTLS: port === 587,
-      auth: { user: SMTP_USER, pass: SMTP_PASS }
+      auth: { user: SMTP_USER, pass: smtpPass }
     });
   } else {
     transporter = null; // chua cau hinh SMTP
@@ -154,5 +180,6 @@ module.exports = {
   buildOrderConfirmationEmail,
   buildPasswordResetEmail,
   buildOtpEmail,
-  verifyMailConnection
+  verifyMailConnection,
+  getMailConfigStatus
 };

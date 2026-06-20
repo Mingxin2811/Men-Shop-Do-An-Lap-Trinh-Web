@@ -495,6 +495,7 @@ https://mens-shop-api-1txr.onrender.com/api
 - Payments: `/api/payments`
 - Blog/posts: `/api/posts`
 - Admin: `/api/admin`
+- Kiểm tra SMTP admin: `GET /api/admin/mail-status?verify=true`
 
 ## Luồng thanh toán online mô phỏng
 
@@ -645,6 +646,8 @@ CLIENT_URL=https://mens-shop-rose.vercel.app,https://preview-domain.vercel.app
 - Nếu muốn gửi Gmail thật, đặt `EMAIL_DEV_MODE=false`.
 - Gmail phải dùng App Password, không dùng mật khẩu Gmail thường.
 - Test bằng `npm run mail:verify`.
+- Trên deploy, admin có thể gọi `GET /api/admin/mail-status?verify=true` kèm Bearer token admin để kiểm tra SMTP ngay trên server hosting.
+- Nếu `passwordHadWhitespace=true`, backend đã tự bỏ khoảng trắng trong `SMTP_PASS`, nhưng vẫn nên lưu App Password trên hosting ở dạng liền 16 ký tự.
 
 ### API mới bị 404 sau deploy
 
