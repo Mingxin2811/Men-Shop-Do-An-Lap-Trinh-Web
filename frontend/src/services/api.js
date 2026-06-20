@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const LOCAL_API_URL = 'http://localhost:5000/api';
+const PRODUCTION_API_URL = 'https://mens-shop-api-1txr.onrender.com/api';
+
+const getDefaultApiUrl = () => {
+  if (typeof window === 'undefined') return LOCAL_API_URL;
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  return isLocalhost ? LOCAL_API_URL : PRODUCTION_API_URL;
+};
+
+const API_URL = (import.meta.env.VITE_API_URL || getDefaultApiUrl()).replace(/\/$/, '');
 
 const api = axios.create({
   baseURL: API_URL,

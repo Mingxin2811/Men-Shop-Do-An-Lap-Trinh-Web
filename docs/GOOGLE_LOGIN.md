@@ -132,9 +132,11 @@ Hosting:
 ```text
 Authorized JavaScript origins:
 https://your-frontend-domain.vercel.app
+https://mens-shop-rose.vercel.app
 
 Authorized redirect URIs:
 https://your-backend-domain.onrender.com/api/auth/google/callback
+https://mens-shop-api-1txr.onrender.com/api/auth/google/callback
 ```
 
 Lỗi thường gặp nhất là `redirect_uri_mismatch`, nghĩa là callback URL trong Google Cloud không khớp chính xác với `GOOGLE_CALLBACK_URL`.
@@ -221,6 +223,14 @@ CLIENT_URL=https://your-frontend-domain.vercel.app
 API_URL=https://your-backend-domain.onrender.com
 ```
 
+Với link deploy hiện tại của đồ án:
+
+```env
+GOOGLE_CALLBACK_URL=https://mens-shop-api-1txr.onrender.com/api/auth/google/callback
+CLIENT_URL=https://mens-shop-rose.vercel.app
+API_URL=https://mens-shop-api-1txr.onrender.com
+```
+
 Start command nên có migration:
 
 ```text
@@ -233,6 +243,12 @@ Nếu backend URL không đổi thì không cần sửa thêm. Nếu đổi back
 
 ```env
 VITE_API_URL=https://your-backend-domain.onrender.com/api
+```
+
+Với link deploy hiện tại:
+
+```env
+VITE_API_URL=https://mens-shop-api-1txr.onrender.com/api
 ```
 
 Sau đó redeploy frontend.
